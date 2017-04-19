@@ -25,7 +25,7 @@
 
 \normalsize
 \vspace{1cm}
-\noindent Submitted by \large{Franziska Meinherz} 
+\noindent Submitted by \large{Franziska Meinherz}
 
 \vspace{0.5cm}
 
@@ -38,7 +38,7 @@
 %-------------------------------------------------------------------------------
 
 \noindent \HRule{0.5pt} \\
-\large{\textit{\textbf{Preliminary note:}} 
+\large{\textit{\textbf{Preliminary note:}}
 
 \normalsize
 
@@ -53,7 +53,7 @@
 
 \subsection*{Problem context}
 
-Octanis Association has built a test rover which can perform data gathering tasks in difficult terrain, and which can be built with basic and low-cost components and runs with open source software. At the moment, the test rover has the sensors required for gathering data on the structure of the snow cover of any given area, and has been sent on a mission  to Antarctica undertaken by researchers from the University of Grenoble. The rover is powered by solar cells which are mounted on its top and has a battery to store energy. The data which it gathers is stored on an SD card which is built into the rover. The rover both gathers data regarding its task - in this case, the structure of the snow cover - and on its own performance. 
+Octanis Association has built a test rover which can perform data gathering tasks in difficult terrain, and which can be built with basic and low-cost components and runs with open source software. At the moment, the test rover has the sensors required for gathering data on the structure of the snow cover of any given area, and has been sent on a mission  to Antarctica undertaken by researchers from the University of Grenoble. The rover is powered by solar cells which are mounted on its top and has a battery to store energy. The data which it gathers is stored on an SD card which is built into the rover. The rover both gathers data regarding its task - in this case, the structure of the snow cover - and on its own performance.
 
 The rover will be back from its current mission towards the end of May. As a follow-up to this mission, the current rover will be improved, in order to enhance its usefulness for similar missions. One key challenge is to enhance the time during which the rover can be active, by optimising the process of charging and discharging the battery.
 
@@ -67,7 +67,7 @@ The aim of this research project is to use the data which the rover has gathered
 
 	\item{\large{Data exploration:} \normalsize Since the current rover is a pilot project, it seems appropriate to develop tools to visualise the data in ways which allow to identify potential measuring or storing errors, and which additionally provide an overall picture of the rover's functioning, in order to develop first hypotheses as to how its operation time could be enhanced.}
 
-	\item{\large{Data analysis:} \normalsize Data on the rover's battery charge status and battery charging / discharging has to be compared to data on the current UV index and other indicators for battery charging potential, on wind intensity and direction\pdfcomment[icon=Note]{does it even collect this data? or is it available from other sources, like the grenoble guys' measurements? or if not can also be dropped} in comparison to the rover's direction of movement, outside temperature, and the rover's speed, in order to find to an optimising strategy for the conditions under which the rover should rest and charge its battery, and for when it should move and use energy.}
+	\item{\large{Data analysis:} \normalsize Data on the rover's battery charge status and battery charging / discharging has to be compared to data on the current UV index /sam{luminosity and solar panel voltage (which varies in function of how bright it is, angle of light rays) more appropriated, not uv index}  and other indicators for battery charging potential, on wind intensity and direction\pdfcomment[icon=Note]{wind data is not collected, but could be downloaded from online weather platforms if really desired} in comparison to the rover's direction of movement, outside temperature, and the rover's speed, in order to find to an optimising strategy for the conditions under which the rover should rest and charge its battery, and for when it should move and use energy.}
 
 \end{enumerate}
 
@@ -76,15 +76,42 @@ The aim of this research project is to use the data which the rover has gathered
 
 \section*{Data}
 
-Since the arrival time of the rover and the data it has gathered during its mission is scheduled only for the end of May, for this project, data from test runs undertaken in Renens will be used. The data structure is exactly the same between the data gathered during the test runs in Renens and the actual mission in Antarctica. Therefore, it should not matter which is used as an input to the data analysis script which is to be developed in the course of this project, with the exeption that no pertinent conclusions can be drawn from the test runs, since the setting was artificial and the sample size - in this case the amount of time which the rover spent in activity - is too small.
+Since the arrival time of the rover and the data it has gathered during its mission is scheduled only for the end of May, for this project, data from test runs undertaken in Renens will be used. The data structure is exactly the same between the data gathered during the test runs in Renens and the actual mission in Antarctica. Therefore, it should not matter which is used as an input to the data analysis script which is to be developed in the course of this project, with the exeption that no pertinent conclusions can be drawn from the test runs, since the setting was artificial and the sample size - in this case the amount of time which the rover spent in activity - is too small /sam: {not necessarily true. the amount of time spent collecting data has less impact than the terrain the data is collected on. we will not have significantly more hours of data from the real mission, so no emphasis on this should be given here}.
 
 \subsection*{Data format and structure}
 
-The data is stored in .bag files. This file structure has been developed as part of the ROS (Robot Operating System) environment to store data collected by any robot as soon as it is received. The data is thus organised along a timeline which corresponds to the robot's internal clock (although this can be overridden with a simulated clock)\pdfcomment[icon=Note]{has this been done?}. In this process, the data is organised in different topics, which each can store different variables. The data can be accessed through different command line tools which are available in the ROS package and can be played back as text in the command window. The data is accessed by topic. The ROS package also provides some tools to visualise the played back data.
+The data is stored in .bag files. This file structure has been developed as part of the ROS (Robot Operating System) environment to store data collected by any robot as soon as it is received. The data is thus organised along a timeline which corresponds to the robot's internal clock (although this can be overridden with a simulated clock)\pdfcomment[icon=Note]{has this been done? /sam: {data is timestamped arbitrarily and it doesn't matter to your analysis if there is an offset}}. In this process, the data is organised in different topics, which each can store different variables. The data can be accessed through different command line tools which are available in the ROS package and can be played back as text in the command window. The data is accessed by topic. The ROS package also provides some tools to visualise the played back data.
 
 \subsection*{Variables}\pdfcomment[icon=Note]{not even sure this is needed at this stage but is good for us to know anyways so we can clarify it even if in the end I don't include it in the proposal}
 
-For this project, two kinds of variables will be considered: On the one hand, variables which relate to the rover's functioning, such as its battery status, its battery charging / discharging status, its speed, its energy use per achieved motion, and its direction, and on the other hand, variables which describe the rover's surroundings and the situational context, such as variables describing the available solar power, variables on wind intensity and direction\pdfcomment[icon=Note]{same as above - do we have this data?}, information on the structure of the terrain - both on the macro level (elevation and inclination) and the micro level (snow cover structure), and the current air pressure.\pdfcomment[icon=Note]{does this list remotely correspond to what is available? btw I seem to remember that you showed me a list of the variables somehow - can you print screen this thing or send it or whatever?}
+For this project, two kinds of variables will be considered: On the one hand, variables which relate to the rover's functioning, such as its battery status, its battery charging / discharging status, its speed, its energy use per achieved motion, and its direction, and on the other hand, variables which describe the rover's surroundings and the situational context, such as variables describing the available solar power, variables on wind intensity and direction\pdfcomment[icon=Note]{same as above - do we have this data? - sam: no wind}, information on the structure of the terrain - both on the macro level (elevation and inclination) and the micro level (snow cover structure), and the current air pressure.\pdfcomment[icon=Note]{does this list remotely correspond to what is available? btw I seem to remember that you showed me a list of the variables somehow - can you print screen this thing or send it or whatever? }
+
+/sam:  data available is. i would leave out the laser scanner data (snow cover structure data) as this is a very advanced form of data to look at and is a project on its own. extract of "easy" available data is below:
+
+- ENERGY
+	- BATTERY_STATUS
+		- Current in (current going into battery from solar -> charging)
+		- Current out (current going into rover system)
+		- battery_remaining in percent (voltage_battery)
+		- solar panel voltage (voltage measured at the solar panels (how much "sun" do we have right now?))
+		- est. solar power
+-WEATHER
+		 - air pressure
+		 - temperature
+		 - humidity
+		- UV INDEX
+		- Lux
+- POSE
+	- latitude, longitude
+	- acceleration x y z
+	- magnetometer x y z
+	- gyroscope x y z
+
+dashboard here:
+http://octanis.org/constellation/
+
+
+
 
 % METHODS
 %-------------------------------------------------------------------------------
@@ -95,7 +122,7 @@ For this project, two kinds of variables will be considered: On the one hand, va
 
 \begin{enumerate}
 
-	\item{\large{Data extraction:} \normalsize böh? \pdfcomment[icon=Note]{teach me!!}}	
+	\item{\large{Data extraction:} \normalsize böh? \pdfcomment[icon=Note]{teach me!!}}
 
 	\item{\large{Data structuring:} \normalsize  The .csv files obtained in the previous step are to be organised in such a way that the data is accessible in ways which makes sense given the steps which are to be performed in the data analysis part. As the project advances, the decisions regarding the formatting of the data are thus revisited in an iterative process.}
 
@@ -113,7 +140,7 @@ For this project, two kinds of variables will be considered: On the one hand, va
 
 \subsection*{Data analysis}
 
-Different analytical tools are to be used in order to gain a picture which is as consistent as possible with what is actually influencing the rover's battery lifetime. 
+Different analytical tools are to be used in order to gain a picture which is as consistent as possible with what is actually influencing the rover's battery lifetime.
 
 \begin{enumerate}
 
