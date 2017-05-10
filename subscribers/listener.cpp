@@ -9,14 +9,19 @@ class Listener{
 	public:
 		void cmdRCCallback(const sensor_msgs::Temperature::ConstPtr& cmd_RC);
 		std::vector<float> & getTemperature();
+		std::vector<int> & getSequenceNr();
 	protected:
 		std::vector<float> temp;
+		std::vector<int> seqnr;
 };
 
 void Listener::cmdRCCallback(const sensor_msgs::Temperature::ConstPtr& cmd_RC){
 	float temperature = cmd_RC->temperature;
 	this -> temp.push_back(temperature);
-	int length = temp.size();
+	std_msgs::Header hdr = cmd_RC -> header;
+	int sequence = hdr.seq;
+	this -> seqnr.push_back(sequence);
+
 	//ROS_INFO("%f",cmd_RC->temperature);
 }
 
@@ -24,23 +29,31 @@ std::vector<float> & Listener::getTemperature(){
 	return this -> temp;
 }
 
+std::vector<int> & Listener::getSequenceNr(){
+	return this -> seqnr;
+}
+
+/*--------------------------------------------------------------------------*/
+
 class Writer{
 	public:
-		void writer(std::vector<float> data, int length);
+		void writer(std::vector<float> data, int length, std::vector<int> seqnr);
 };
 
-void Writer::writer(std::vector<float> data, int length){
+void Writer::writer(std::vector<float> data, int length, std::vector<int> seqnr){
 	std::string filename = "testfile";
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Temperature" << std::endl;
+	file << "Sequence_nr" << ";" << "Temperature" << std::endl;
 	for (int i = 0; i < length; i++){
-		file << data[i] << std::endl;
+		file << seqnr[i]  << ";" << data[i]<< std::endl;
 	}
 }
+
+/*--------------------------------------------------------------------------*/
 
 int main(int argc, char **argv){
 	ros::init(argc, argv, "listener");
@@ -53,9 +66,9 @@ int main(int argc, char **argv){
 
 	std::vector<float> tmp = lstnr.getTemperature();
 	int length = tmp.size();
-	std::cout << length << std::endl;
+	std::vector<int> seqnr = lstnr.getSequenceNr();
 		
-	wrtr.writer(tmp, length);
+	wrtr.writer(tmp, length, seqnr);
 
 	return 0;
 }
