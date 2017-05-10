@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "data_extraction")
+set(data_extraction_MAINTAINER "viki <viki@todo.todo>")
+set(data_extraction_DEPRECATED "")
+set(data_extraction_VERSION "0.0.0")
+set(data_extraction_BUILD_DEPENDS "roscpp" "rospy" "std_msgs")
+set(data_extraction_RUN_DEPENDS "roscpp" "rospy" "std_msgs")
+set(data_extraction_BUILDTOOL_DEPENDS "catkin")
