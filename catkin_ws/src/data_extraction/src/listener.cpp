@@ -6,9 +6,16 @@
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/FluidPressure.h"
 #include "mavros_msgs/WaypointList.h"
+#include "mavros_msgs/RCIn.h"
+#include "mavros_msgs/State.h"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <iterator>
+#include <algorithm>
 
 /*NOTES:
 #mavros/battery: message structure not available; impossible to include atm (probably due to an outdated msg file somewhere in the ROS package, need to find & correct this)
@@ -26,6 +33,8 @@ class Listener{
 		void mavrosAtmPressureCallback(const sensor_msgs::FluidPressure::ConstPtr& mavros_atm_pres_clbc); //subscriber mavros/atm_pressure
 		void mavTempCallback(const sensor_msgs::Temperature::ConstPtr& mavtmp_clbc); //subscriber mavros/imu/temp
 		//void missionWaypointCallback(const mavros_msgs::WaypointList::ConstPtr& waypntlst_clbc); //subscriber mavros/mission/waypoints NOTE: SEQUENCE NR NOT AVAILABLE
+		void mavRCInCallback(const mavros_msgs::RCIn::ConstPtr& mavRCIn_clbc); //subscriber mavros/rc/in
+		void mavStateCallback(const mavros_msgs::State::ConstPtr& mavState_clbc); //subscriber mavros/state
 		std::vector<float> & getTemperature();
 		std::vector<int> & getSequenceNrTemp();
 		std::vector<float> & getAngularVelocityX();
@@ -46,6 +55,14 @@ class Listener{
 		//std::vector<float> & getXLat();
 		//std::vector<float> & getYLong();
 		//std::vector<float> & getZAlt();
+		std::vector<int> & getMavRCRSSI();
+		std::vector<std::vector<short unsigned int> > & getChannels();
+		std::vector<int> & getSequenceNrRCIn();
+		std::vector<bool> & getConnected();
+		std::vector<bool> & getArmed();
+		std::vector<bool> & getGuided();
+		std::vector<std::string> & getMode();
+		std::vector<int> & getSequenceNrState();
 	protected:
 		std::vector<float> temp; //vector of the temperature measurements (/imu/temp)
 		std::vector<int> seqnr_temp; //vector of sequence numbers (temperature) (/imu/temp)
@@ -67,6 +84,14 @@ class Listener{
 		//std::vector<float> x_lat; //vector of the latitude values (mavros/mission/waypoints)
 		//std::vector<float> y_long; //vector of the longitude values (mavros/mission/waypoints)
 		//std::vector<float> z_alt; //vector of the altitude values (mavros/mission/waypoints)
+		std::vector<int> rssi; //vector of the RSSI values (mavros/rc/in)
+		std::vector<std::vector<short unsigned int> > channels; //array of the channels vectors (mavros/rc/in)
+		std::vector<int> seqnr_mav_rc_in; //vector of the RC sequence numbers (mavros/rc/in)
+		std::vector<bool> connected; //vector of connected booleans (mavros/State)
+		std::vector<bool> armed; //vector of armed booleans (mavros/State)
+		std::vector<bool> guided; //vector of guided booleans (mavros/State)
+		std::vector<std::string> mode; //vector of mode (mavros/State)
+		std::vector<int> seqnr_state; //vector of the sequence numbers (mavros/state)
 };
 
 void Listener::tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc){
@@ -128,6 +153,35 @@ void Listener::mavTempCallback(const sensor_msgs::Temperature::ConstPtr& mavtmp_
 	this -> y_long.push_back(y_long);
 	this -> z_alt.push_back(z_alt);
 }*/
+
+void Listener::mavRCInCallback(const mavros_msgs::RCIn::ConstPtr& mavRCIn_clbc){
+	int rssi = mavRCIn_clbc -> rssi;
+	std::vector<short unsigned int, std::allocator<short unsigned int> > channels = mavRCIn_clbc -> channels;
+	int nr_channels = channels.size();
+	std::vector<short unsigned int> channel;
+	for (int i = 0; i < nr_channels; i++){
+		channel.push_back(channels[i]);
+	}
+	this -> rssi.push_back(rssi);
+	this -> channels.push_back(channel);
+	std_msgs::Header hdr = mavRCIn_clbc -> header;
+	int sequence = hdr.seq;
+	this -> seqnr_mav_rc_in.push_back(sequence);
+}
+
+void Listener::mavStateCallback(const mavros_msgs::State::ConstPtr& mavState_clbc){
+	bool connected = mavState_clbc -> connected;
+	bool armed = mavState_clbc -> armed;
+	bool guided = mavState_clbc -> guided;
+	std::string mode = mavState_clbc -> mode;
+	this -> connected.push_back(connected);
+	this -> armed.push_back(armed);
+	this -> guided.push_back(guided);
+	this -> mode.push_back(mode);
+	std_msgs::Header hdr = mavState_clbc -> header;
+	int sequence = hdr.seq;
+	this -> seqnr_state.push_back(sequence);
+}
 
 std::vector<float> & Listener::getTemperature(){
 	return this -> temp;
@@ -208,6 +262,38 @@ std::vector<float> & Listener::getYLong(){
 std::vector<float> & Listener::getZAlt(){
 	return this -> z_alt;
 }*/
+
+std::vector<int> & Listener::getMavRCRSSI(){
+	return this -> rssi;
+}
+
+std::vector<std::vector<short unsigned int> > & Listener::getChannels(){
+	return this -> channels;
+}
+
+std::vector<int> & Listener::getSequenceNrRCIn(){
+	return this -> seqnr_mav_rc_in;
+}
+
+std::vector<bool> & Listener::getConnected(){
+	return this -> connected;
+}
+
+std::vector<bool> & Listener::getArmed(){
+	return this -> armed;
+}
+
+std::vector<bool> & Listener::getGuided(){
+	return this -> guided;
+}
+
+std::vector<std::string> & Listener::getMode(){
+	return this -> mode;
+}
+
+std::vector<int> & Listener::getSequenceNrState(){
+	return this -> seqnr_state;
+}
 
 /*--------------------------------------------------------------------------*/
 
@@ -299,7 +385,7 @@ void MavTempWriter::writer(std::vector<float> data, int length, std::vector<int>
 
 /*--------------------------------------------------------------------------*/
 
-/*MissionWaypointWriter class: writes the temperature data to csv file (includes a header row)*/
+/*MissionWaypointWriter class: writes the mission waypoint data to csv file (includes a header row)*/
 
 /*class MissionWaypointWriter{
 	public:
@@ -321,22 +407,83 @@ void MissionWaypointWriter::writer(std::vector<float> x_lat, std::vector<float> 
 
 /*--------------------------------------------------------------------------*/
 
+/*RCInWriter class: writes the RC In data to csv file (includes a header row) */
+
+class RCInWriter{
+	public:
+		void writer(std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr);
+};
+
+void RCInWriter::writer(std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr){
+	std::string filename = "RCIndata";
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	int nr_channels = channels[0].size();
+	std::stringstream tt;
+	for (int i = 0; i < nr_channels; i++){
+		tt << ";";
+		tt << "Channels";
+	}
+	file << "Sequence_nr" << ";" << "RSSI" << tt.str() << std::endl;
+	for (int i = 0; i < length; i++){
+		std::vector<short unsigned int> channel = channels[i];
+		std::stringstream ss;
+		std::copy(channel.begin(), channel.end(), std::ostream_iterator<short unsigned int>(ss, ";"));	
+		std::string s = ss.str();
+		s = s.substr(0, s.length()-1);		
+		file << seqnr[i]  << ";" << rssi[i] << ";" << s << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
+/*MavStateWriter class: writes the temperature data to csv file (includes a header row)*/
+
+class MavStateWriter{
+	public:
+		void writer(std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr);
+};
+
+void MavStateWriter::writer(std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr){
+	std::string filename = "mavstatedata";
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Sequence_nr" << ";" << "Connected" << ";" << "Armed" << ";" << "Guided" << ";" << "Mode" << std::endl;
+	for (int i = 0; i < length; i++){
+		file << seqnr[i]  << ";" << connected[i] << ";" << armed[i] << ";" << guided[i] << ";" << mode[i] << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
 /*main: Runs the subscribers. Upon exiting the programme, it runs the writers. */
 
 int main(int argc, char **argv){
 	ros::init(argc, argv, "listener");
 	ros::NodeHandle n;
 	Listener lstnr;
+
 	TempWriter tmpwrtr;
 	IMUWriter imuwrtr;
 	MavPressWriter mavpresswrtr;
 	MavTempWriter mavtmpwrtr;
 	//MissionWaypointWriter mssnwptwrtr;
+	RCInWriter rcinwrtr;
+	MavStateWriter stwrtr;
+
 	ros::Subscriber sub1 = n.subscribe("imu/temp", 1000, &Listener::tempCallback, &lstnr);
 	ros::Subscriber sub2 = n.subscribe("imu/raw", 1000, &Listener::imuCallback, &lstnr);
 	ros::Subscriber sub3 = n.subscribe("mavros/imu/atm_pressure", 1000, &Listener::mavrosAtmPressureCallback, &lstnr);
 	ros::Subscriber sub4 = n.subscribe("mavros/imu/temperature", 1000, &Listener::mavTempCallback, &lstnr);
 	//ros::Subscriber sub5 = n.subscribe("mavros/mission/waypoints", 1000, &Listener::missionWaypointCallback, &lstnr);
+	ros::Subscriber sub6 = n.subscribe("mavros/rc/in", 1000, &Listener::mavRCInCallback, &lstnr);
+	ros::Subscriber sub7 = n.subscribe("mavros/state", 1000, &Listener::mavStateCallback, &lstnr);
 
 	ros::spin();
 
@@ -365,11 +512,24 @@ int main(int argc, char **argv){
 	//std::vector<float> y_long = lstnr.getYLong();
 	//std::vector<float> z_alt = lstnr.getZAlt();
 	//int length_mssnwpt = x_lat.size();
+	std::vector<int> rssi = lstnr.getMavRCRSSI();
+	std::vector<std::vector<short unsigned int> > channels = lstnr.getChannels();
+	int length_rcin = rssi.size();
+	std::vector<int> seqnr_rc_in = lstnr.getSequenceNrRCIn();
+	std::vector<bool> connected = lstnr.getConnected();
+	std::vector<bool> armed = lstnr.getArmed();
+	std::vector<bool> guided = lstnr.getGuided();
+	std::vector<std::string> mode = lstnr.getMode();
+	int length_state = connected.size();
+	std::vector<int> seqnr_state = lstnr.getSequenceNrState();
+
 	tmpwrtr.writer(tmp, length_temp, seqnr_temp);
 	imuwrtr.writer(ang_vel_x, ang_vel_y, ang_vel_z, orientation_x, orientation_y, orientation_z, orientation_w, linear_acc_x, linear_acc_y, linear_acc_z, length_imu, seqnr_angvel);
 	mavpresswrtr.writer(fluid_pressure, length_mav_press, seqnr_fluid_pressure);
 	mavtmpwrtr.writer(mavtmp, length_mav_temp, seqnr_mav_temp);
 	//mssnwptwrtr.writer(x_lat, y_long, z_alt, length_mssnwpt);
+	rcinwrtr.writer(rssi, channels, length_rcin, seqnr_rc_in);
+	stwrtr.writer(connected, armed, guided, mode, length_state, seqnr_state);
 	
 
 	return 0;
