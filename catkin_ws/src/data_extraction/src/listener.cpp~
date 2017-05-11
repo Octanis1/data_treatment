@@ -11,8 +11,7 @@
 #include <fstream>
 
 /*NOTES:
-#mavros/battery: message structure not available; impossible to include atm (probably due to an outdated msg file somewhere in the ROS package, need to find & correct this)
-#mavros/mission/waypoints: problem with message types; currently unresolved (not compiling if uncommented)
+mavros/mission/waypoints: problem with message types; currently unresolved (not compiling if uncommented)
 */
 
 /*--------------------------------------------------------------------------*/
