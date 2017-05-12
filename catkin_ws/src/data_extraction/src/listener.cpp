@@ -37,6 +37,7 @@ class Listener{
 		void mavStateCallback(const mavros_msgs::State::ConstPtr& mavState_clbc); //subscriber mavros/state
 		std::vector<float> & getTemperature();
 		std::vector<int> & getSequenceNrTemp();
+		std::vector<std::string> & getTimeTemp();
 		std::vector<float> & getAngularVelocityX();
 		std::vector<float> & getAngularVelocityY();
 		std::vector<float> & getAngularVelocityZ();
@@ -48,24 +49,30 @@ class Listener{
 		std::vector<float> & getLinearAccelerationY();
 		std::vector<float> & getLinearAccelerationZ();
 		std::vector<int> & getSequenceNrImu();
+		std::vector<std::string> & getTimeImu();
 		std::vector<float> & getPressure();
 		std::vector<int> & getSequenceNrMavPress();
+		std::vector<std::string> & getTimePress();
 		std::vector<float> & getMavTemperature();
 		std::vector<int> & getMavSequenceNrTemp();
+		std::vector<std::string> & getTimeMavTemp();
 		//std::vector<float> & getXLat();
 		//std::vector<float> & getYLong();
 		//std::vector<float> & getZAlt();
 		std::vector<int> & getMavRCRSSI();
 		std::vector<std::vector<short unsigned int> > & getChannels();
 		std::vector<int> & getSequenceNrRCIn();
+		std::vector<std::string> & getTimeRCIn();
 		std::vector<bool> & getConnected();
 		std::vector<bool> & getArmed();
 		std::vector<bool> & getGuided();
 		std::vector<std::string> & getMode();
 		std::vector<int> & getSequenceNrState();
+		std::vector<std::string> & getTimeState();
 	protected:
 		std::vector<float> temp; //vector of the temperature measurements (/imu/temp)
 		std::vector<int> seqnr_temp; //vector of sequence numbers (temperature) (/imu/temp)
+		std::vector<std::string> time_temp; //vector of the time stamps (imu/temp)
 		std::vector<float> angular_vel_x; //vector of the angular velocity x values (/imu/raw)
 		std::vector<float> angular_vel_y; //vector of the angular velocity y values (/imu/raw)
 		std::vector<float> angular_vel_z; //vector of the angular velocity z values (/imu/raw)
@@ -77,21 +84,26 @@ class Listener{
 		std::vector<float> linear_acc_y; //vector of the linear acceleration y values (/imu/raw)
 		std::vector<float> linear_acc_z; //vector of the linear acceleration z values (/imu/raw)
 		std::vector<int> seqnr_imu; //vector of sequence numbers (IMU) (/imu/raw)
+		std::vector<std::string> time_imu; //vector of timestamps (/imu/raw)
 		std::vector<float> pressure; //vector of the fluid pressure values (mavros/atm_pressure)
 		std::vector<int> seqnr_mav_pressure; //vector of the sequence numbers (mavros/atm_pressure)
+		std::vector<std::string> time_press; //vector of the time stamps (mavros/atm_pressure)
 		std::vector<float> mav_temp; //vector of the temperature measurements (mavros/imu/temp)
 		std::vector<int> seqnr_mav_temp; //vector of the sequence numbers (mavros/imu/temp)
+		std::vector<std::string> time_mav_temp; //vector of the time stamps (mavros/imu/temp)
 		//std::vector<float> x_lat; //vector of the latitude values (mavros/mission/waypoints)
 		//std::vector<float> y_long; //vector of the longitude values (mavros/mission/waypoints)
 		//std::vector<float> z_alt; //vector of the altitude values (mavros/mission/waypoints)
 		std::vector<int> rssi; //vector of the RSSI values (mavros/rc/in)
 		std::vector<std::vector<short unsigned int> > channels; //array of the channels vectors (mavros/rc/in)
 		std::vector<int> seqnr_mav_rc_in; //vector of the RC sequence numbers (mavros/rc/in)
+		std::vector<std::string> time_rc_in; //vector of time stamps (mavros/rc/in)
 		std::vector<bool> connected; //vector of connected booleans (mavros/State)
 		std::vector<bool> armed; //vector of armed booleans (mavros/State)
 		std::vector<bool> guided; //vector of guided booleans (mavros/State)
 		std::vector<std::string> mode; //vector of mode (mavros/State)
 		std::vector<int> seqnr_state; //vector of the sequence numbers (mavros/state)
+		std::vector<std::string> time_state; //vector of the time stamps (mavros/state)
 };
 
 void Listener::tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc){
@@ -99,6 +111,12 @@ void Listener::tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc){
 	this -> temp.push_back(temperature);
 	std_msgs::Header hdr = tmp_clbc -> header;
 	int sequence = hdr.seq;
+	int secs = hdr.stamp.sec;
+	int nanosecs = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs << "." << nanosecs;
+	std::string time = ss.str();
+	this -> time_temp.push_back(time);
 	this -> seqnr_temp.push_back(sequence);
 }
 
@@ -125,7 +143,13 @@ void Listener::imuCallback(const sensor_msgs::Imu::ConstPtr& imu_clbc){
 	this -> linear_acc_z.push_back(linearz);
 	std_msgs::Header hdr = imu_clbc -> header;
 	int sequence = hdr.seq;
+	int secs_imu = hdr.stamp.sec;
+	int nanosecs_imu = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs_imu << "." << nanosecs_imu;
+	std::string time_imu = ss.str();
 	this -> seqnr_imu.push_back(sequence);
+	this -> time_imu.push_back(time_imu);
 }
 
 void Listener::mavrosAtmPressureCallback(const sensor_msgs::FluidPressure::ConstPtr& mavros_atm_pres_clbc){
@@ -133,6 +157,12 @@ void Listener::mavrosAtmPressureCallback(const sensor_msgs::FluidPressure::Const
 	this -> pressure.push_back(pressure);
 	std_msgs::Header hdr = mavros_atm_pres_clbc -> header;
 	int sequence = hdr.seq;
+	int secs = hdr.stamp.sec;
+	int nanosecs = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs << "." << nanosecs;
+	std::string time = ss.str();
+	this -> time_press.push_back(time);
 	this -> seqnr_mav_pressure.push_back(sequence);
 }
 
@@ -141,6 +171,12 @@ void Listener::mavTempCallback(const sensor_msgs::Temperature::ConstPtr& mavtmp_
 	this -> mav_temp.push_back(temperature);
 	std_msgs::Header hdr = mavtmp_clbc -> header;
 	int sequence = hdr.seq;
+	int secs = hdr.stamp.sec;
+	int nanosecs = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs << "." << nanosecs;
+	std::string time = ss.str();
+	this -> time_mav_temp.push_back(time);
 	this -> seqnr_mav_temp.push_back(sequence);
 }
 
@@ -166,6 +202,12 @@ void Listener::mavRCInCallback(const mavros_msgs::RCIn::ConstPtr& mavRCIn_clbc){
 	this -> channels.push_back(channel);
 	std_msgs::Header hdr = mavRCIn_clbc -> header;
 	int sequence = hdr.seq;
+	int secs = hdr.stamp.sec;
+	int nanosecs = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs << "." << nanosecs;
+	std::string time = ss.str();
+	this -> time_rc_in.push_back(time);
 	this -> seqnr_mav_rc_in.push_back(sequence);
 }
 
@@ -180,6 +222,12 @@ void Listener::mavStateCallback(const mavros_msgs::State::ConstPtr& mavState_clb
 	this -> mode.push_back(mode);
 	std_msgs::Header hdr = mavState_clbc -> header;
 	int sequence = hdr.seq;
+	int secs = hdr.stamp.sec;
+	int nanosecs = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs << "." << nanosecs;
+	std::string time = ss.str();
+	this -> time_state.push_back(time);
 	this -> seqnr_state.push_back(sequence);
 }
 
@@ -189,6 +237,10 @@ std::vector<float> & Listener::getTemperature(){
 
 std::vector<int> & Listener::getSequenceNrTemp(){
 	return this -> seqnr_temp;
+}
+
+std::vector<std::string> & Listener::getTimeTemp(){
+	return this -> time_temp;
 }
 
 std::vector<float> & Listener::getAngularVelocityX(){
@@ -235,6 +287,10 @@ std::vector<int> & Listener::getSequenceNrImu(){
 	return this -> seqnr_imu;
 }
 
+std::vector<std::string> & Listener::getTimeImu(){
+	return this -> time_imu;
+}
+
 std::vector<float> & Listener::getPressure(){
 	return this -> pressure;
 }
@@ -243,12 +299,20 @@ std::vector<int> & Listener::getSequenceNrMavPress(){
 	return this -> seqnr_mav_pressure;
 }
 
+std::vector<std::string> & Listener::getTimePress(){
+	return this -> time_press;
+}
+
 std::vector<float> & Listener::getMavTemperature(){
 	return this -> mav_temp;
 }
 
 std::vector<int> & Listener::getMavSequenceNrTemp(){
 	return this -> seqnr_mav_temp;
+}
+
+std::vector<std::string> & Listener::getTimeMavTemp(){
+	return this -> time_mav_temp;
 }
 
 /*std::vector<float> & Listener::getXLat(){
@@ -275,6 +339,10 @@ std::vector<int> & Listener::getSequenceNrRCIn(){
 	return this -> seqnr_mav_rc_in;
 }
 
+std::vector<std::string> & Listener::getTimeRCIn(){
+	return this -> time_rc_in;
+}
+
 std::vector<bool> & Listener::getConnected(){
 	return this -> connected;
 }
@@ -295,25 +363,29 @@ std::vector<int> & Listener::getSequenceNrState(){
 	return this -> seqnr_state;
 }
 
+std::vector<std::string> & Listener::getTimeState(){
+	return this -> time_state;
+}
+
 /*--------------------------------------------------------------------------*/
 
 /*TempWriter class: writes the temperature data to csv file (includes a header row)*/
 
 class TempWriter{
 	public:
-		void writer(std::vector<float> data, int length, std::vector<int> seqnr);
+		void writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void TempWriter::writer(std::vector<float> data, int length, std::vector<int> seqnr){
+void TempWriter::writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::string filename = "tempdata";
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Sequence_nr" << ";" << "Temperature" << std::endl;
+	file << "Time" << ";" << "Sequence_nr" << ";" << "Temperature" << std::endl;
 	for (int i = 0; i < length; i++){
-		file << seqnr[i]  << ";" << data[i]<< std::endl;
+		file << time[i] << ";" << seqnr[i]  << ";" << data[i]<< std::endl;
 	}
 }
 
@@ -323,19 +395,19 @@ void TempWriter::writer(std::vector<float> data, int length, std::vector<int> se
 
 class IMUWriter{
 	public:
-		void writer(std::vector<float> ang_vel_x, std::vector<float> ang_vel_y, std::vector<float> ang_vel_z, std::vector<float> ornt_x, std::vector<float> ornt_y, std::vector<float> ornt_z, std::vector<float> ornt_w, std::vector<float> linear_acc_x, std::vector<float> linear_acc_y, std::vector<float> linear_acc_z, int length, std::vector<int> seqnr);
+		void writer(std::vector<float> ang_vel_x, std::vector<float> ang_vel_y, std::vector<float> ang_vel_z, std::vector<float> ornt_x, std::vector<float> ornt_y, std::vector<float> ornt_z, std::vector<float> ornt_w, std::vector<float> linear_acc_x, std::vector<float> linear_acc_y, std::vector<float> linear_acc_z, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void IMUWriter::writer(std::vector<float> ang_vel_x, std::vector<float> ang_vel_y, std::vector<float> ang_vel_z, std::vector<float> ornt_x, std::vector<float> ornt_y, std::vector<float> ornt_z, std::vector<float> ornt_w, std::vector<float> linear_acc_x, std::vector<float> linear_acc_y, std::vector<float> linear_acc_z, int length, std::vector<int> seqnr){
+void IMUWriter::writer(std::vector<float> ang_vel_x, std::vector<float> ang_vel_y, std::vector<float> ang_vel_z, std::vector<float> ornt_x, std::vector<float> ornt_y, std::vector<float> ornt_z, std::vector<float> ornt_w, std::vector<float> linear_acc_x, std::vector<float> linear_acc_y, std::vector<float> linear_acc_z, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::string filename = "imudata";
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Sequence_nr" << ";" << "Angular_velocity_x" << ";" << "Angular_velocity_y" << ";" << "Angular_velocity_z" << ";" << "Orientation_x" << ";" << "Orientation_y" << ";" << "Orientation_z" << ";" << "Orientation_w" << ";" << "Linear_acceleration_x" << ";" << "Linear_acceleration_y" << ";" << "Linear_acceleration_z" << std::endl;
+	file << "Time" << ";" << "Sequence_nr" << ";" << "Angular_velocity_x" << ";" << "Angular_velocity_y" << ";" << "Angular_velocity_z" << ";" << "Orientation_x" << ";" << "Orientation_y" << ";" << "Orientation_z" << ";" << "Orientation_w" << ";" << "Linear_acceleration_x" << ";" << "Linear_acceleration_y" << ";" << "Linear_acceleration_z" << std::endl;
 	for (int i = 0; i < length; i++){
-		file << seqnr[i]  << ";" << ang_vel_x[i] << ";" << ang_vel_y[i] << ";" << ang_vel_z[i] << ";" << ornt_x[i] << ";" << ornt_y[i] << ";" << ornt_z[i] << ";" << ornt_w[i] << ";" << linear_acc_x[i] << ";" << linear_acc_y[i] << ";" << linear_acc_z[i] << std::endl;
+		file << time[i]  << ";" << seqnr[i] << ";" << ang_vel_x[i] << ";" << ang_vel_y[i] << ";" << ang_vel_z[i] << ";" << ornt_x[i] << ";" << ornt_y[i] << ";" << ornt_z[i] << ";" << ornt_w[i] << ";" << linear_acc_x[i] << ";" << linear_acc_y[i] << ";" << linear_acc_z[i] << std::endl;
 	}
 }
 
@@ -345,19 +417,19 @@ void IMUWriter::writer(std::vector<float> ang_vel_x, std::vector<float> ang_vel_
 
 class MavPressWriter{
 	public:
-		void writer(std::vector<float> data, int length, std::vector<int> seqnr);
+		void writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void MavPressWriter::writer(std::vector<float> data, int length, std::vector<int> seqnr){
+void MavPressWriter::writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::string filename = "mavpressdata";
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Sequence_nr" << ";" << "Fluid_pressure" << std::endl;
+	file << "Time" << ";" << "Sequence_nr" << ";" << "Fluid_pressure" << std::endl;
 	for (int i = 0; i < length; i++){
-		file << seqnr[i]  << ";" << data[i]<< std::endl;
+		file << time[i] << ";" << seqnr[i]  << ";" << data[i]<< std::endl;
 	}
 }
 
@@ -367,19 +439,19 @@ void MavPressWriter::writer(std::vector<float> data, int length, std::vector<int
 
 class MavTempWriter{
 	public:
-		void writer(std::vector<float> data, int length, std::vector<int> seqnr);
+		void writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void MavTempWriter::writer(std::vector<float> data, int length, std::vector<int> seqnr){
+void MavTempWriter::writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::string filename = "mavtempdata";
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Sequence_nr" << ";" << "Temperature" << std::endl;
+	file << "Time" << ";" << "Sequence_nr" << ";" << "Temperature" << std::endl;
 	for (int i = 0; i < length; i++){
-		file << seqnr[i]  << ";" << data[i]<< std::endl;
+		file << time[i] << ";" << seqnr[i]  << ";" << data[i]<< std::endl;
 	}
 }
 
@@ -411,10 +483,10 @@ void MissionWaypointWriter::writer(std::vector<float> x_lat, std::vector<float> 
 
 class RCInWriter{
 	public:
-		void writer(std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr);
+		void writer(std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void RCInWriter::writer(std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr){
+void RCInWriter::writer(std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::string filename = "RCIndata";
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
@@ -427,36 +499,36 @@ void RCInWriter::writer(std::vector<int> rssi, std::vector<std::vector<short uns
 		tt << ";";
 		tt << "Channels";
 	}
-	file << "Sequence_nr" << ";" << "RSSI" << tt.str() << std::endl;
+	file << "Time" << ";" << "Sequence_nr" << ";" << "RSSI" << tt.str() << std::endl;
 	for (int i = 0; i < length; i++){
 		std::vector<short unsigned int> channel = channels[i];
 		std::stringstream ss;
 		std::copy(channel.begin(), channel.end(), std::ostream_iterator<short unsigned int>(ss, ";"));	
 		std::string s = ss.str();
 		s = s.substr(0, s.length()-1);		
-		file << seqnr[i]  << ";" << rssi[i] << ";" << s << std::endl;
+		file << time[i] << ";" << seqnr[i]  << ";" << rssi[i] << ";" << s << std::endl;
 	}
 }
 
 /*--------------------------------------------------------------------------*/
 
-/*MavStateWriter class: writes the temperature data to csv file (includes a header row)*/
+/*MavStateWriter class: writes the state data to csv file (includes a header row)*/
 
 class MavStateWriter{
 	public:
-		void writer(std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr);
+		void writer(std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void MavStateWriter::writer(std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr){
+void MavStateWriter::writer(std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::string filename = "mavstatedata";
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Sequence_nr" << ";" << "Connected" << ";" << "Armed" << ";" << "Guided" << ";" << "Mode" << std::endl;
+	file << "Time" << ";" << "Sequence_nr" << ";" << "Connected" << ";" << "Armed" << ";" << "Guided" << ";" << "Mode" << std::endl;
 	for (int i = 0; i < length; i++){
-		file << seqnr[i]  << ";" << connected[i] << ";" << armed[i] << ";" << guided[i] << ";" << mode[i] << std::endl;
+		file << time[i] << ";" << seqnr[i]  << ";" << connected[i] << ";" << armed[i] << ";" << guided[i] << ";" << mode[i] << std::endl;
 	}
 }
 
@@ -490,6 +562,7 @@ int main(int argc, char **argv){
 	std::vector<float> tmp = lstnr.getTemperature();
 	int length_temp = tmp.size();
 	std::vector<int> seqnr_temp = lstnr.getSequenceNrTemp();
+	std::vector<std::string> time_temp = lstnr.getTimeTemp();
 	std::vector<float> ang_vel_x = lstnr.getAngularVelocityX();
 	std::vector<float> ang_vel_z = lstnr.getAngularVelocityY();
 	std::vector<float> ang_vel_y = lstnr.getAngularVelocityZ();
@@ -502,12 +575,15 @@ int main(int argc, char **argv){
 	std::vector<float> linear_acc_z = lstnr.getLinearAccelerationZ();
 	int length_imu = ang_vel_x.size();
 	std::vector<int> seqnr_angvel = lstnr.getSequenceNrImu();
+	std::vector<std::string> time_imu = lstnr.getTimeImu();
 	std::vector<float> fluid_pressure = lstnr.getPressure();
 	int length_mav_press = fluid_pressure.size();
 	std::vector<int> seqnr_fluid_pressure = lstnr.getSequenceNrMavPress();
+	std::vector<std::string> time_press = lstnr.getTimePress();
 	std::vector<float> mavtmp = lstnr.getMavTemperature();
 	int length_mav_temp = mavtmp.size();
 	std::vector<int> seqnr_mav_temp = lstnr.getMavSequenceNrTemp();
+	std::vector<std::string> time_mav_temp = lstnr.getTimeMavTemp();
 	//std::vector<float> x_lat = lstnr.getXLat();
 	//std::vector<float> y_long = lstnr.getYLong();
 	//std::vector<float> z_alt = lstnr.getZAlt();
@@ -516,20 +592,22 @@ int main(int argc, char **argv){
 	std::vector<std::vector<short unsigned int> > channels = lstnr.getChannels();
 	int length_rcin = rssi.size();
 	std::vector<int> seqnr_rc_in = lstnr.getSequenceNrRCIn();
+	std::vector<std::string> time_rc_in = lstnr.getTimeRCIn();
 	std::vector<bool> connected = lstnr.getConnected();
 	std::vector<bool> armed = lstnr.getArmed();
 	std::vector<bool> guided = lstnr.getGuided();
 	std::vector<std::string> mode = lstnr.getMode();
 	int length_state = connected.size();
 	std::vector<int> seqnr_state = lstnr.getSequenceNrState();
+	std::vector<std::string> time_state = lstnr.getTimeState();
 
-	tmpwrtr.writer(tmp, length_temp, seqnr_temp);
-	imuwrtr.writer(ang_vel_x, ang_vel_y, ang_vel_z, orientation_x, orientation_y, orientation_z, orientation_w, linear_acc_x, linear_acc_y, linear_acc_z, length_imu, seqnr_angvel);
-	mavpresswrtr.writer(fluid_pressure, length_mav_press, seqnr_fluid_pressure);
-	mavtmpwrtr.writer(mavtmp, length_mav_temp, seqnr_mav_temp);
+	tmpwrtr.writer(tmp, length_temp, seqnr_temp, time_temp);
+	imuwrtr.writer(ang_vel_x, ang_vel_y, ang_vel_z, orientation_x, orientation_y, orientation_z, orientation_w, linear_acc_x, linear_acc_y, linear_acc_z, length_imu, seqnr_angvel, time_imu);
+	mavpresswrtr.writer(fluid_pressure, length_mav_press, seqnr_fluid_pressure, time_press);
+	mavtmpwrtr.writer(mavtmp, length_mav_temp, seqnr_mav_temp, time_mav_temp);
 	//mssnwptwrtr.writer(x_lat, y_long, z_alt, length_mssnwpt);
-	rcinwrtr.writer(rssi, channels, length_rcin, seqnr_rc_in);
-	stwrtr.writer(connected, armed, guided, mode, length_state, seqnr_state);
+	rcinwrtr.writer(rssi, channels, length_rcin, seqnr_rc_in, time_rc_in);
+	stwrtr.writer(connected, armed, guided, mode, length_state, seqnr_state, time_state);
 	
 
 	return 0;
