@@ -1,4 +1,5 @@
-/*add the .h file of any additional topic to this list (compare sensor_msgs/Temperature.h) */
+/*add the .h file of any additional topic to this list (compare sensor_msgs/Temperature.h) 
+Identify the name of the .h file by executing 'rostopic type <topic>'*/
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
@@ -8,6 +9,7 @@
 #include "mavros_msgs/WaypointList.h"
 #include "mavros_msgs/RCIn.h"
 #include "mavros_msgs/State.h"
+#include "mavros_msgs/Mavlink.h"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -24,10 +26,11 @@
 
 /*--------------------------------------------------------------------------*/
 
-/*Listener class: contains the subscribers */
+/*Listener class: contains the subscribers, who store the data as members of the Listener class (in arrays). Data is accessible through access member functions. */
 
 class Listener{
 	public:
+		//subscribers
 		void tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc); //subscriber imu/temp
 		void imuCallback(const sensor_msgs::Imu::ConstPtr& imu_clbc); //subscriber imu/raw
 		void mavrosAtmPressureCallback(const sensor_msgs::FluidPressure::ConstPtr& mavros_atm_pres_clbc); //subscriber mavros/atm_pressure
@@ -35,6 +38,8 @@ class Listener{
 		//void missionWaypointCallback(const mavros_msgs::WaypointList::ConstPtr& waypntlst_clbc); //subscriber mavros/mission/waypoints NOTE: SEQUENCE NR NOT AVAILABLE
 		void mavRCInCallback(const mavros_msgs::RCIn::ConstPtr& mavRCIn_clbc); //subscriber mavros/rc/in
 		void mavStateCallback(const mavros_msgs::State::ConstPtr& mavState_clbc); //subscriber mavros/state
+		//access member functions
+		void mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clbc); //subscriber mavlink/from
 		std::vector<float> & getTemperature();
 		std::vector<int> & getSequenceNrTemp();
 		std::vector<std::string> & getTimeTemp();
@@ -69,6 +74,16 @@ class Listener{
 		std::vector<std::string> & getMode();
 		std::vector<int> & getSequenceNrState();
 		std::vector<std::string> & getTimeState();
+		std::vector<bool> & getIsValidMavlink();
+		std::vector<int> & getLenMavlink();
+		std::vector<int> & getSeqMavlink();
+		std::vector<int> & getSysidMavlink();
+		std::vector<int> & getCompidMavlink();
+		std::vector<int> & getMsgidMavlink();
+		std::vector<int> & getChecksumMavlink();
+		std::vector<std::vector<long unsigned int> > & getPayloadMavlink();
+		std::vector<int> & getSequenceNrMavlink();
+		std::vector<std::string> & getTimeMavlink();
 	protected:
 		std::vector<float> temp; //vector of the temperature measurements (/imu/temp)
 		std::vector<int> seqnr_temp; //vector of sequence numbers (temperature) (/imu/temp)
@@ -104,6 +119,16 @@ class Listener{
 		std::vector<std::string> mode; //vector of mode (mavros/State)
 		std::vector<int> seqnr_state; //vector of the sequence numbers (mavros/state)
 		std::vector<std::string> time_state; //vector of the time stamps (mavros/state)
+		std::vector<bool> is_valid_mavlink; 
+		std::vector<int> len_mavlink;
+		std::vector<int> seq_mavlink;
+		std::vector<int> sysid_mavlink;
+		std::vector<int> compid_mavlink;
+		std::vector<int> msgid_mavlink;
+		std::vector<int> checksum_mavlink;
+		std::vector<std::vector<long unsigned int> > payload_mavlink;
+		std::vector<int> seqnr_mavlink;
+		std::vector<std::string> time_mavlink;
 };
 
 void Listener::tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc){
@@ -230,6 +255,35 @@ void Listener::mavStateCallback(const mavros_msgs::State::ConstPtr& mavState_clb
 	this -> time_state.push_back(time);
 	this -> seqnr_state.push_back(sequence);
 }
+
+void Listener::mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clbc){
+	bool is_valid = mavlink_clbc -> is_valid;
+	int len = mavlink_clbc -> len;
+	int seq = mavlink_clbc -> seq;
+	int sysid = mavlink_clbc -> sysid;
+	int compid = mavlink_clbc -> compid;
+	int msgid = mavlink_clbc -> msgid;
+	int checksum = mavlink_clbc -> checksum;
+	std::vector<long unsigned int> payload = mavlink_clbc -> payload64;
+	this -> is_valid_mavlink.push_back(is_valid);
+	this -> len_mavlink.push_back(len);
+	this -> seq_mavlink.push_back(seq);
+	this -> sysid_mavlink.push_back(sysid);
+	this -> compid_mavlink.push_back(compid);
+	this -> msgid_mavlink.push_back(msgid);
+	this -> checksum_mavlink.push_back(checksum);
+	this -> payload_mavlink.push_back(payload);
+	std_msgs::Header hdr = mavlink_clbc -> header;
+	int sequence = hdr.seq;
+	int secs = hdr.stamp.sec;
+	int nanosecs = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs << "." << nanosecs;
+	std::string time = ss.str();
+	this -> time_mavlink.push_back(time);
+	this -> seqnr_mavlink.push_back(sequence);
+}
+
 
 std::vector<float> & Listener::getTemperature(){
 	return this -> temp;
@@ -365,6 +419,46 @@ std::vector<int> & Listener::getSequenceNrState(){
 
 std::vector<std::string> & Listener::getTimeState(){
 	return this -> time_state;
+}
+
+std::vector<bool> & Listener::getIsValidMavlink(){
+	return this -> is_valid_mavlink;
+}
+
+std::vector<int> & Listener::getLenMavlink(){
+	return this -> len_mavlink;
+}
+
+std::vector<int> & Listener::getSeqMavlink(){
+	return this -> seq_mavlink;
+}
+
+std::vector<int> & Listener::getSysidMavlink(){
+	return this -> sysid_mavlink;
+}
+
+std::vector<int> & Listener::getCompidMavlink(){
+	return this -> compid_mavlink;
+}
+
+std::vector<int> & Listener::getMsgidMavlink(){
+	return this -> msgid_mavlink;
+}
+
+std::vector<int> & Listener::getChecksumMavlink(){
+	return this -> checksum_mavlink;
+}
+
+std::vector<std::vector<long unsigned int> > & Listener::getPayloadMavlink(){
+	return this -> payload_mavlink;
+}
+
+std::vector<int> & Listener::getSequenceNrMavlink(){
+	return this -> seqnr_mavlink;
+}
+
+std::vector<std::string> & Listener::getTimeMavlink(){
+	return this -> time_mavlink;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -534,6 +628,39 @@ void MavStateWriter::writer(std::vector<bool> connected, std::vector<bool> armed
 
 /*--------------------------------------------------------------------------*/
 
+/*MavLinkWriter class: writes the mavlink data to csv file (includes a header row)*/
+
+class MavLinkWriter{
+	public:
+		void writer(std::vector<bool> is_valid, std::vector<int> len, std::vector<int> seq, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<int> seqnr, std::vector<std::string> time);
+};
+
+void MavLinkWriter::writer(std::vector<bool> is_valid, std::vector<int> len, std::vector<int> seq, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<int> seqnr, std::vector<std::string> time){
+	std::string filename = "mavlinkdata";
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	int len_payload = payload[0].size();
+	std::stringstream tt;
+	for (int i = 0; i < len_payload; i++){
+		tt << ";";
+		tt << "payload";
+	}
+	file << "Time" << ";" << "Sequence_nr" << ";" << "is_valid" << ";" << "len" << ";" << "seq" << ";" << "sysid" << ";" << "compid" << ";" << "msgid" << ";" << "checksum" << ";" << tt.str() << std::endl;
+	for (int i = 0; i < length; i++){
+		std::vector<long unsigned int> payloadx = payload[i];
+		std::stringstream ss;
+		std::copy(payloadx.begin(), payloadx.end(), std::ostream_iterator<long unsigned int>(ss, ";"));	
+		std::string s = ss.str();
+		s = s.substr(0, s.length()-1);		
+		file << time[i] << ";" << seqnr[i]  << ";" << is_valid[i] << ";" << len[i] << ";" << seq[i] << ";" << sysid[i] << ";" << compid[i] << ";" << msgid[i] << ";" << checksum[i] << ";" << s << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
 /*main: Runs the subscribers. Upon exiting the programme, it runs the writers. */
 
 int main(int argc, char **argv){
@@ -548,6 +675,7 @@ int main(int argc, char **argv){
 	//MissionWaypointWriter mssnwptwrtr;
 	RCInWriter rcinwrtr;
 	MavStateWriter stwrtr;
+	MavLinkWriter mvlnkwrtr;
 
 	ros::Subscriber sub1 = n.subscribe("imu/temp", 1000, &Listener::tempCallback, &lstnr);
 	ros::Subscriber sub2 = n.subscribe("imu/raw", 1000, &Listener::imuCallback, &lstnr);
@@ -556,6 +684,7 @@ int main(int argc, char **argv){
 	//ros::Subscriber sub5 = n.subscribe("mavros/mission/waypoints", 1000, &Listener::missionWaypointCallback, &lstnr);
 	ros::Subscriber sub6 = n.subscribe("mavros/rc/in", 1000, &Listener::mavRCInCallback, &lstnr);
 	ros::Subscriber sub7 = n.subscribe("mavros/state", 1000, &Listener::mavStateCallback, &lstnr);
+	ros::Subscriber sub8 = n.subscribe("mavlink/from", 1000, &Listener::mavLinkCallback, &lstnr);
 
 	ros::spin();
 
@@ -600,6 +729,17 @@ int main(int argc, char **argv){
 	int length_state = connected.size();
 	std::vector<int> seqnr_state = lstnr.getSequenceNrState();
 	std::vector<std::string> time_state = lstnr.getTimeState();
+	std::vector<bool> is_valid_mavlink = lstnr.getIsValidMavlink();
+	std::vector<int> len_mavlink = lstnr.getLenMavlink();
+	std::vector<int> seq_mavlink = lstnr.getSeqMavlink();
+	std::vector<int> sysid_mavlink = lstnr.getSysidMavlink();
+	std::vector<int> compid_mavlink = lstnr.getCompidMavlink();
+	std::vector<int> msgid_mavlink = lstnr.getMsgidMavlink();
+	std::vector<int> checksum_mavlink = lstnr.getChecksumMavlink();
+	std::vector<std::vector<long unsigned int> > payload_mavlink = lstnr.getPayloadMavlink();
+	int length_mavlink = is_valid_mavlink.size();
+	std::vector<int> seqnr_mavlink = lstnr.getSequenceNrMavlink();
+	std::vector<std::string> time_mavlink = lstnr.getTimeMavlink();
 
 	tmpwrtr.writer(tmp, length_temp, seqnr_temp, time_temp);
 	imuwrtr.writer(ang_vel_x, ang_vel_y, ang_vel_z, orientation_x, orientation_y, orientation_z, orientation_w, linear_acc_x, linear_acc_y, linear_acc_z, length_imu, seqnr_angvel, time_imu);
@@ -608,6 +748,7 @@ int main(int argc, char **argv){
 	//mssnwptwrtr.writer(x_lat, y_long, z_alt, length_mssnwpt);
 	rcinwrtr.writer(rssi, channels, length_rcin, seqnr_rc_in, time_rc_in);
 	stwrtr.writer(connected, armed, guided, mode, length_state, seqnr_state, time_state);
+	mvlnkwrtr.writer(is_valid_mavlink, len_mavlink, seq_mavlink, sysid_mavlink, compid_mavlink, msgid_mavlink, checksum_mavlink, payload_mavlink, length_mavlink, seqnr_mavlink, time_mavlink);
 	
 
 	return 0;
