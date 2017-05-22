@@ -10,6 +10,7 @@ Identify the name of the .h file by executing 'rostopic type <topic>'*/
 #include "mavros_msgs/RCIn.h"
 #include "mavros_msgs/State.h"
 #include "mavros_msgs/Mavlink.h"
+#include "sensor_msgs/BatteryState.h"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -27,7 +28,7 @@ Identify the name of the .h file by executing 'rostopic type <topic>'*/
 /*--------------------------------------------------------------------------*/
 
 /*Listener class: contains the subscribers, who store the data as members of the Listener class (in arrays). Data is accessible through access member functions. */
-
+//battery status / solar cell input data: subscribe to battery topic, array cell_voltage
 class Listener{
 	public:
 		//subscribers
@@ -40,6 +41,7 @@ class Listener{
 		void mavStateCallback(const mavros_msgs::State::ConstPtr& mavState_clbc); //subscriber mavros/state
 		//access member functions
 		void mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clbc); //subscriber mavlink/from
+		void battStateCallback(const sensor_msgs::BatteryState::ConstPtr& battstate_clbc); //subscriber mavros/battery
 		std::vector<float> & getTemperature();
 		std::vector<int> & getSequenceNrTemp();
 		std::vector<std::string> & getTimeTemp();
@@ -84,6 +86,10 @@ class Listener{
 		std::vector<std::vector<long unsigned int> > & getPayloadMavlink();
 		std::vector<int> & getSequenceNrMavlink();
 		std::vector<std::string> & getTimeMavlink();
+		std::vector<std::vector<float> > & getCellVoltage();
+		std::vector<float> & getCurrent();
+		std::vector<int> & getSequenceNrBatteryState();
+		std::vector<std::string> & getTimeBatteryState();
 	protected:
 		std::vector<float> temp; //vector of the temperature measurements (/imu/temp)
 		std::vector<int> seqnr_temp; //vector of sequence numbers (temperature) (/imu/temp)
@@ -129,6 +135,10 @@ class Listener{
 		std::vector<std::vector<long unsigned int> > payload_mavlink;
 		std::vector<int> seqnr_mavlink;
 		std::vector<std::string> time_mavlink;
+		std::vector<std::vector<float> > cell_voltage;
+		std::vector<float> current;
+		std::vector<int> seqnr_battstate;
+		std::vector<std::string> time_battstate;
 };
 
 void Listener::tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc){
@@ -229,6 +239,7 @@ void Listener::mavRCInCallback(const mavros_msgs::RCIn::ConstPtr& mavRCIn_clbc){
 	int sequence = hdr.seq;
 	int secs = hdr.stamp.sec;
 	int nanosecs = hdr.stamp.nsec;
+	std::string frame_id = hdr.frame_id;
 	std::stringstream ss;
 	ss << secs << "." << nanosecs;
 	std::string time = ss.str();
@@ -284,6 +295,21 @@ void Listener::mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clb
 	this -> seqnr_mavlink.push_back(sequence);
 }
 
+void Listener::battStateCallback(const sensor_msgs::BatteryState::ConstPtr& battstate_clbc){
+	std::vector<float> cell_voltage = battstate_clbc -> cell_voltage;
+	float current = battstate_clbc -> current;
+	this -> cell_voltage.push_back(cell_voltage);
+	this -> current.push_back(current);
+	std_msgs::Header hdr = battstate_clbc -> header;
+	int sequence = hdr.seq;
+	int secs = hdr.stamp.sec;
+	int nanosecs = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs << "." << nanosecs;
+	std::string time = ss.str();
+	this -> time_battstate.push_back(time);
+	this -> seqnr_battstate.push_back(sequence);
+}
 
 std::vector<float> & Listener::getTemperature(){
 	return this -> temp;
@@ -459,6 +485,22 @@ std::vector<int> & Listener::getSequenceNrMavlink(){
 
 std::vector<std::string> & Listener::getTimeMavlink(){
 	return this -> time_mavlink;
+}
+
+std::vector<std::vector<float> > & Listener::getCellVoltage(){
+	return this -> cell_voltage;
+}
+
+std::vector<float> & Listener::getCurrent(){
+	return this -> current;
+}
+
+std::vector<int> & Listener::getSequenceNrBatteryState(){
+	return this -> seqnr_battstate;
+}
+
+std::vector<std::string> & Listener::getTimeBatteryState(){
+	return this -> time_battstate;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -661,6 +703,28 @@ void MavLinkWriter::writer(std::vector<bool> is_valid, std::vector<int> len, std
 
 /*--------------------------------------------------------------------------*/
 
+/*BattStateWriter class: writes the battery and solar panel data to csv file (includes a header row)*/
+
+class BattStateWriter{
+	public:
+		void writer(std::vector<std::vector<float> > cell_voltage, std::vector<float> current, int length, std::vector<int> seqnr, std::vector<std::string> time);
+};
+
+void BattStateWriter::writer(std::vector<std::vector<float> > cell_voltage, std::vector<float> current, int length, std::vector<int> seqnr, std::vector<std::string> time){
+	std::string filename = "batterydata";
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "Sequence_nr" << ";" << "Current in" << ";" << "Current out (maybe)" << ";" << "Solar voltage" << ";" << "Est. solar power" << std::endl;
+	for (int i = 0; i < length; i++){
+		file << time[i] << ";" << seqnr[i] << ";" << cell_voltage[i][2] << ";" << current[i] << ";" << cell_voltage[i][1] << ";" << cell_voltage[i][0] << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
 /*main: Runs the subscribers. Upon exiting the programme, it runs the writers. */
 
 int main(int argc, char **argv){
@@ -675,7 +739,8 @@ int main(int argc, char **argv){
 	//MissionWaypointWriter mssnwptwrtr;
 	RCInWriter rcinwrtr;
 	MavStateWriter stwrtr;
-	MavLinkWriter mvlnkwrtr;
+	//MavLinkWriter mvlnkwrtr;
+	BattStateWriter bttstwrtr;
 
 	ros::Subscriber sub1 = n.subscribe("imu/temp", 1000, &Listener::tempCallback, &lstnr);
 	ros::Subscriber sub2 = n.subscribe("imu/raw", 1000, &Listener::imuCallback, &lstnr);
@@ -684,7 +749,8 @@ int main(int argc, char **argv){
 	//ros::Subscriber sub5 = n.subscribe("mavros/mission/waypoints", 1000, &Listener::missionWaypointCallback, &lstnr);
 	ros::Subscriber sub6 = n.subscribe("mavros/rc/in", 1000, &Listener::mavRCInCallback, &lstnr);
 	ros::Subscriber sub7 = n.subscribe("mavros/state", 1000, &Listener::mavStateCallback, &lstnr);
-	ros::Subscriber sub8 = n.subscribe("mavlink/from", 1000, &Listener::mavLinkCallback, &lstnr);
+	//ros::Subscriber sub8 = n.subscribe("mavlink/from", 1000, &Listener::mavLinkCallback, &lstnr);
+	ros::Subscriber sub9 = n.subscribe("mavros/battery", 1000, &Listener::battStateCallback, &lstnr);
 
 	ros::spin();
 
@@ -730,16 +796,21 @@ int main(int argc, char **argv){
 	std::vector<int> seqnr_state = lstnr.getSequenceNrState();
 	std::vector<std::string> time_state = lstnr.getTimeState();
 	std::vector<bool> is_valid_mavlink = lstnr.getIsValidMavlink();
-	std::vector<int> len_mavlink = lstnr.getLenMavlink();
-	std::vector<int> seq_mavlink = lstnr.getSeqMavlink();
-	std::vector<int> sysid_mavlink = lstnr.getSysidMavlink();
-	std::vector<int> compid_mavlink = lstnr.getCompidMavlink();
-	std::vector<int> msgid_mavlink = lstnr.getMsgidMavlink();
-	std::vector<int> checksum_mavlink = lstnr.getChecksumMavlink();
-	std::vector<std::vector<long unsigned int> > payload_mavlink = lstnr.getPayloadMavlink();
-	int length_mavlink = is_valid_mavlink.size();
-	std::vector<int> seqnr_mavlink = lstnr.getSequenceNrMavlink();
-	std::vector<std::string> time_mavlink = lstnr.getTimeMavlink();
+	//std::vector<int> len_mavlink = lstnr.getLenMavlink();
+	//std::vector<int> seq_mavlink = lstnr.getSeqMavlink();
+	//std::vector<int> sysid_mavlink = lstnr.getSysidMavlink();
+	//std::vector<int> compid_mavlink = lstnr.getCompidMavlink();
+	//std::vector<int> msgid_mavlink = lstnr.getMsgidMavlink();
+	//std::vector<int> checksum_mavlink = lstnr.getChecksumMavlink();
+	//std::vector<std::vector<long unsigned int> > payload_mavlink = lstnr.getPayloadMavlink();
+	//int length_mavlink = is_valid_mavlink.size();
+	//std::vector<int> seqnr_mavlink = lstnr.getSequenceNrMavlink();
+	//std::vector<std::string> time_mavlink = lstnr.getTimeMavlink();
+	std::vector<std::vector<float> > cell_voltage = lstnr.getCellVoltage();
+	std::vector<float> current = lstnr.getCurrent();
+	int length_battstate = current.size();
+	std::vector<int> seqnr_battstate = lstnr.getSequenceNrBatteryState();
+	std::vector<std::string> time_battstate = lstnr.getTimeBatteryState();
 
 	tmpwrtr.writer(tmp, length_temp, seqnr_temp, time_temp);
 	imuwrtr.writer(ang_vel_x, ang_vel_y, ang_vel_z, orientation_x, orientation_y, orientation_z, orientation_w, linear_acc_x, linear_acc_y, linear_acc_z, length_imu, seqnr_angvel, time_imu);
@@ -748,8 +819,8 @@ int main(int argc, char **argv){
 	//mssnwptwrtr.writer(x_lat, y_long, z_alt, length_mssnwpt);
 	rcinwrtr.writer(rssi, channels, length_rcin, seqnr_rc_in, time_rc_in);
 	stwrtr.writer(connected, armed, guided, mode, length_state, seqnr_state, time_state);
-	mvlnkwrtr.writer(is_valid_mavlink, len_mavlink, seq_mavlink, sysid_mavlink, compid_mavlink, msgid_mavlink, checksum_mavlink, payload_mavlink, length_mavlink, seqnr_mavlink, time_mavlink);
-	
+	//mvlnkwrtr.writer(is_valid_mavlink, len_mavlink, seq_mavlink, sysid_mavlink, compid_mavlink, msgid_mavlink, checksum_mavlink, payload_mavlink, length_mavlink, seqnr_mavlink, time_mavlink);
+	bttstwrtr.writer(cell_voltage, current, length_battstate, seqnr_battstate, time_battstate);
 
 	return 0;
 }
