@@ -633,7 +633,7 @@ void RCInWriter::writer(std::vector<int> rssi, std::vector<std::vector<short uns
 	std::stringstream tt;
 	for (int i = 0; i < nr_channels; i++){
 		tt << ";";
-		tt << "Channels";
+		tt << "Channel" << " " << i+1 ;
 	}
 	file << "Time" << ";" << "Sequence_nr" << ";" << "RSSI" << tt.str() << std::endl;
 	for (int i = 0; i < length; i++){
@@ -717,7 +717,7 @@ void BattStateWriter::writer(std::vector<std::vector<float> > cell_voltage, std:
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Time" << ";" << "Sequence_nr" << ";" << "Current in" << ";" << "Current out (maybe)" << ";" << "Solar voltage" << ";" << "Est. solar power" << std::endl;
+	file << "Time" << ";" << "Sequence_nr" << ";" << "Current_in" << ";" << "Current_out_maybe" << ";" << "Solar_voltage" << ";" << "Est_solar_power" << std::endl;
 	for (int i = 0; i < length; i++){
 		file << time[i] << ";" << seqnr[i] << ";" << cell_voltage[i][2] << ";" << current[i] << ";" << cell_voltage[i][1] << ";" << cell_voltage[i][0] << std::endl;
 	}
