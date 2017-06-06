@@ -21,7 +21,6 @@ Identify the name of the .h file by executing 'rostopic type <topic>'*/
 #include <algorithm>
 
 /*NOTES:
-#mavros/battery: message structure not available; impossible to include atm (probably due to an outdated msg file somewhere in the ROS package, need to find & correct this)
 #mavros/mission/waypoints: problem with message types; currently unresolved (not compiling if uncommented)
 */
 
@@ -725,6 +724,92 @@ void BattStateWriter::writer(std::vector<std::vector<float> > cell_voltage, std:
 
 /*--------------------------------------------------------------------------*/
 
+/*CleanData class: contains functions with the purpose to clean data prior to extraction */
+
+class CleanData{
+	public:
+		std::vector<std::vector<float> > calculateMedian(std::vector<float> data, std::vector<std::string> time); //averages the data to the nearest second (averaging by taking the median of the data points between two seconds)
+};
+
+std::vector<std::vector<float> > CleanData::calculateMedian(std::vector<float> data, std::vector<std::string> time){
+
+	//convert the vector with the time stamp to integer for further calculations
+	std::vector<double> time_double;
+	int ln = time.size();
+	for (int i = 0; i < ln; i++){
+		std::string x = time[i];
+		double y = ::atof(x.c_str());
+		time_double.push_back(y);
+	}
+
+	//initialising
+	std::vector<std::vector<float> > medians;
+	int startpos = 0;
+	int endpos;
+	int tag = 0;
+
+	while (tag != 1){
+		for (int i = startpos; i < time_double.size(); i++){
+			int firstint = floor(time_double[startpos] + 0.5);
+			int nearestint = floor(time_double[i] + 0.5);
+			//when the time stamp is rounded to the next second, start calculating the median of the data points until the next rounded second is reached
+			if (nearestint != firstint){
+				endpos = i;
+				std::vector<float> partialdata;
+				//access only the data points covering one second of data
+				for (int j = startpos; j < endpos; j++){
+					partialdata.push_back(data[j]);
+				}
+				int length = partialdata.size();
+				//calculate the median
+				float median;
+				sort(partialdata.begin(), partialdata.end());
+				if (length  % 2 == 0){
+					median = (partialdata[length / 2 - 1] + partialdata[length / 2]) / 2;
+				}
+				else {
+					median = partialdata[length / 2];
+				}
+				//store the median in a vector which only contains one data point per second (data averaged (median) to the nearest second)
+				std::vector<float> point;
+				point.push_back(median);
+				point.push_back(firstint);
+				medians.push_back(point);
+				startpos = endpos;
+			}
+			//final iteration is different in order not to loose the last data point
+			else if (i == (time_double.size() - 1)){
+				endpos = i;
+				std::vector<float> partialdata;
+				//access only the data points covering one second of data
+				for (int j = startpos; j <= endpos; j++){
+					partialdata.push_back(data[j]);
+				}
+				int length = partialdata.size();
+				//calculate the median
+				float median;
+				sort(partialdata.begin(), partialdata.end());
+				if (length  % 2 == 0){
+					median = (partialdata[length / 2 - 1] + partialdata[length / 2]) / 2;
+				}
+				else {
+					median = partialdata[length / 2];
+				}
+				//store the median in a vector which only contains one data point per second (data averaged (median) to the nearest second)
+				std::vector<float> point;
+				point.push_back(median);
+				point.push_back(firstint);
+				medians.push_back(point);
+				tag = 1;
+			}
+		}
+	}	
+
+	return medians;
+}
+
+/*--------------------------------------------------------------------------*/
+
 /*main: Runs the subscribers. Upon exiting the programme, it runs the writers. */
 
 int main(int argc, char **argv){
@@ -741,6 +826,7 @@ int main(int argc, char **argv){
 	MavStateWriter stwrtr;
 	//MavLinkWriter mvlnkwrtr;
 	BattStateWriter bttstwrtr;
+	CleanData clndata;
 
 	ros::Subscriber sub1 = n.subscribe("imu/temp", 1000, &Listener::tempCallback, &lstnr);
 	ros::Subscriber sub2 = n.subscribe("imu/raw", 1000, &Listener::imuCallback, &lstnr);
