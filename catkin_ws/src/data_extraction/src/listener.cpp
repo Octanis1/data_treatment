@@ -508,11 +508,10 @@ std::vector<std::string> & Listener::getTimeBatteryState(){
 
 class TempWriter{
 	public:
-		void writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time);
+		void writer(std::string filename, std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void TempWriter::writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time){
-	std::string filename = "tempdata";
+void TempWriter::writer(std::string filename, std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
@@ -530,11 +529,10 @@ void TempWriter::writer(std::vector<float> data, int length, std::vector<int> se
 
 class IMUWriter{
 	public:
-		void writer(std::vector<float> ang_vel_x, std::vector<float> ang_vel_y, std::vector<float> ang_vel_z, std::vector<float> ornt_x, std::vector<float> ornt_y, std::vector<float> ornt_z, std::vector<float> ornt_w, std::vector<float> linear_acc_x, std::vector<float> linear_acc_y, std::vector<float> linear_acc_z, int length, std::vector<int> seqnr, std::vector<std::string> time);
+		void writer(std::string filename, std::vector<float> ang_vel_x, std::vector<float> ang_vel_y, std::vector<float> ang_vel_z, std::vector<float> ornt_x, std::vector<float> ornt_y, std::vector<float> ornt_z, std::vector<float> ornt_w, std::vector<float> linear_acc_x, std::vector<float> linear_acc_y, std::vector<float> linear_acc_z, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void IMUWriter::writer(std::vector<float> ang_vel_x, std::vector<float> ang_vel_y, std::vector<float> ang_vel_z, std::vector<float> ornt_x, std::vector<float> ornt_y, std::vector<float> ornt_z, std::vector<float> ornt_w, std::vector<float> linear_acc_x, std::vector<float> linear_acc_y, std::vector<float> linear_acc_z, int length, std::vector<int> seqnr, std::vector<std::string> time){
-	std::string filename = "imudata";
+void IMUWriter::writer(std::string filename, std::vector<float> ang_vel_x, std::vector<float> ang_vel_y, std::vector<float> ang_vel_z, std::vector<float> ornt_x, std::vector<float> ornt_y, std::vector<float> ornt_z, std::vector<float> ornt_w, std::vector<float> linear_acc_x, std::vector<float> linear_acc_y, std::vector<float> linear_acc_z, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
@@ -552,11 +550,10 @@ void IMUWriter::writer(std::vector<float> ang_vel_x, std::vector<float> ang_vel_
 
 class MavPressWriter{
 	public:
-		void writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time);
+		void writer(std::string filename, std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void MavPressWriter::writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time){
-	std::string filename = "mavpressdata";
+void MavPressWriter::writer(std::string filename, std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
@@ -574,11 +571,10 @@ void MavPressWriter::writer(std::vector<float> data, int length, std::vector<int
 
 class MavTempWriter{
 	public:
-		void writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time);
+		void writer(std::string filename, std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void MavTempWriter::writer(std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time){
-	std::string filename = "mavtempdata";
+void MavTempWriter::writer(std::string filename, std::vector<float> data, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
@@ -596,10 +592,10 @@ void MavTempWriter::writer(std::vector<float> data, int length, std::vector<int>
 
 /*class MissionWaypointWriter{
 	public:
-		void writer(std::vector<float> x_lat, std::vector<float> y_long, std::vector<float> z_alt, int length);
+		void writer(std::string filename, std::vector<float> x_lat, std::vector<float> y_long, std::vector<float> z_alt, int length);
 };
 
-void MissionWaypointWriter::writer(std::vector<float> x_lat, std::vector<float> y_long, std::vector<float> z_alt, int length){
+void MissionWaypointWriter::writer(std::string filename, std::vector<float> x_lat, std::vector<float> y_long, std::vector<float> z_alt, int length){
 	std::string filename = "mavtempdata";
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
@@ -618,11 +614,10 @@ void MissionWaypointWriter::writer(std::vector<float> x_lat, std::vector<float> 
 
 class RCInWriter{
 	public:
-		void writer(std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr, std::vector<std::string> time);
+		void writer(std::string filename, std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void RCInWriter::writer(std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr, std::vector<std::string> time){
-	std::string filename = "RCIndata";
+void RCInWriter::writer(std::string filename, std::vector<int> rssi, std::vector<std::vector<short unsigned int> > channels, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
@@ -651,11 +646,10 @@ void RCInWriter::writer(std::vector<int> rssi, std::vector<std::vector<short uns
 
 class MavStateWriter{
 	public:
-		void writer(std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr, std::vector<std::string> time);
+		void writer(std::string filename, std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void MavStateWriter::writer(std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr, std::vector<std::string> time){
-	std::string filename = "mavstatedata";
+void MavStateWriter::writer(std::string filename, std::vector<bool> connected, std::vector<bool> armed, std::vector<bool> guided, std::vector<std::string> mode, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
@@ -673,11 +667,10 @@ void MavStateWriter::writer(std::vector<bool> connected, std::vector<bool> armed
 
 class MavLinkWriter{
 	public:
-		void writer(std::vector<bool> is_valid, std::vector<int> len, std::vector<int> seq, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<int> seqnr, std::vector<std::string> time);
+		void writer(std::string filename, std::vector<bool> is_valid, std::vector<int> len, std::vector<int> seq, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void MavLinkWriter::writer(std::vector<bool> is_valid, std::vector<int> len, std::vector<int> seq, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<int> seqnr, std::vector<std::string> time){
-	std::string filename = "mavlinkdata";
+void MavLinkWriter::writer(std::string filename, std::vector<bool> is_valid, std::vector<int> len, std::vector<int> seq, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
@@ -706,11 +699,10 @@ void MavLinkWriter::writer(std::vector<bool> is_valid, std::vector<int> len, std
 
 class BattStateWriter{
 	public:
-		void writer(std::vector<std::vector<float> > cell_voltage, std::vector<float> current, int length, std::vector<int> seqnr, std::vector<std::string> time);
+		void writer(std::string filename, std::vector<std::vector<float> > cell_voltage, std::vector<float> current, int length, std::vector<int> seqnr, std::vector<std::string> time);
 };
 
-void BattStateWriter::writer(std::vector<std::vector<float> > cell_voltage, std::vector<float> current, int length, std::vector<int> seqnr, std::vector<std::string> time){
-	std::string filename = "batterydata";
+void BattStateWriter::writer(std::string filename, std::vector<std::vector<float> > cell_voltage, std::vector<float> current, int length, std::vector<int> seqnr, std::vector<std::string> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
@@ -728,12 +720,12 @@ void BattStateWriter::writer(std::vector<std::vector<float> > cell_voltage, std:
 
 class CleanData{
 	public:
-		std::vector<std::vector<float> > calculateMedian(std::vector<float> data, std::vector<std::string> time); //averages the data to the nearest second (averaging by taking the median of the data points between two seconds)
+		std::vector<std::vector<float> > calculateMedian(std::vector<float> data, std::vector<double> time_double); //averages the data to the nearest second (averaging by taking the median of the data points between two seconds)
+		void writer(std::string filename, int length, std::vector<std::vector<float> > data);
+		std::vector<double> convertTimeToDouble(std::vector<std::string> time);
 };
 
-std::vector<std::vector<float> > CleanData::calculateMedian(std::vector<float> data, std::vector<std::string> time){
-
-	//convert the vector with the time stamp to integer for further calculations
+std::vector<double> CleanData::convertTimeToDouble(std::vector<std::string> time){
 	std::vector<double> time_double;
 	int ln = time.size();
 	for (int i = 0; i < ln; i++){
@@ -741,6 +733,17 @@ std::vector<std::vector<float> > CleanData::calculateMedian(std::vector<float> d
 		double y = ::atof(x.c_str());
 		time_double.push_back(y);
 	}
+	int start_time = time_double[0];
+	std::vector<double> time_double_clean;
+	for (int i = 0; i < time_double.size(); i++){
+		double time = time_double[i];
+		time_double_clean.push_back(time - start_time);
+	}
+
+	return time_double_clean;
+}
+
+std::vector<std::vector<float> > CleanData::calculateMedian(std::vector<float> data, std::vector<double> time_double){
 
 	//initialising
 	std::vector<std::vector<float> > medians;
@@ -808,6 +811,18 @@ std::vector<std::vector<float> > CleanData::calculateMedian(std::vector<float> d
 	return medians;
 }
 
+void CleanData::writer(std::string filename, int length, std::vector<std::vector<float> > data){
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "Median" << ";" << filename << std::endl;
+	for (int i = 0; i < length; i++){
+		file << data[i][1] << ";" << data[i][0] << std::endl;
+	}
+}
+
 /*--------------------------------------------------------------------------*/
 
 /*main: Runs the subscribers. Upon exiting the programme, it runs the writers. */
@@ -817,6 +832,7 @@ int main(int argc, char **argv){
 	ros::NodeHandle n;
 	Listener lstnr;
 
+//declare the writer classes
 	TempWriter tmpwrtr;
 	IMUWriter imuwrtr;
 	MavPressWriter mavpresswrtr;
@@ -828,6 +844,7 @@ int main(int argc, char **argv){
 	BattStateWriter bttstwrtr;
 	CleanData clndata;
 
+//run the subscribers
 	ros::Subscriber sub1 = n.subscribe("imu/temp", 1000, &Listener::tempCallback, &lstnr);
 	ros::Subscriber sub2 = n.subscribe("imu/raw", 1000, &Listener::imuCallback, &lstnr);
 	ros::Subscriber sub3 = n.subscribe("mavros/imu/atm_pressure", 1000, &Listener::mavrosAtmPressureCallback, &lstnr);
@@ -840,6 +857,7 @@ int main(int argc, char **argv){
 
 	ros::spin();
 
+//get all the data stored as members of the listener class
 	std::vector<float> tmp = lstnr.getTemperature();
 	int length_temp = tmp.size();
 	std::vector<int> seqnr_temp = lstnr.getSequenceNrTemp();
@@ -898,15 +916,31 @@ int main(int argc, char **argv){
 	std::vector<int> seqnr_battstate = lstnr.getSequenceNrBatteryState();
 	std::vector<std::string> time_battstate = lstnr.getTimeBatteryState();
 
-	tmpwrtr.writer(tmp, length_temp, seqnr_temp, time_temp);
-	imuwrtr.writer(ang_vel_x, ang_vel_y, ang_vel_z, orientation_x, orientation_y, orientation_z, orientation_w, linear_acc_x, linear_acc_y, linear_acc_z, length_imu, seqnr_angvel, time_imu);
-	mavpresswrtr.writer(fluid_pressure, length_mav_press, seqnr_fluid_pressure, time_press);
-	mavtmpwrtr.writer(mavtmp, length_mav_temp, seqnr_mav_temp, time_mav_temp);
+//write the data to file with the writer functions of the writer classes
+	std::string filename_tmp = "tempdata";
+	tmpwrtr.writer(filename_tmp, tmp, length_temp, seqnr_temp, time_temp);
+	std::string filename_imu = "imudata";
+	imuwrtr.writer(filename_imu, ang_vel_x, ang_vel_y, ang_vel_z, orientation_x, orientation_y, orientation_z, orientation_w, linear_acc_x, linear_acc_y, linear_acc_z, length_imu, seqnr_angvel, time_imu);
+	std::string filename_mav_press = "mavpressdata";
+	mavpresswrtr.writer(filename_mav_press, fluid_pressure, length_mav_press, seqnr_fluid_pressure, time_press);
+	std::string filename_mavtemp = "mavtempdata";
+	mavtmpwrtr.writer(filename_mavtemp, mavtmp, length_mav_temp, seqnr_mav_temp, time_mav_temp);
 	//mssnwptwrtr.writer(x_lat, y_long, z_alt, length_mssnwpt);
-	rcinwrtr.writer(rssi, channels, length_rcin, seqnr_rc_in, time_rc_in);
-	stwrtr.writer(connected, armed, guided, mode, length_state, seqnr_state, time_state);
+	std::string filename_rcchannels = "rcchanneldata";
+	rcinwrtr.writer(filename_rcchannels, rssi, channels, length_rcin, seqnr_rc_in, time_rc_in);
+	std::string filename_status = "statusdata";
+	stwrtr.writer(filename_status, connected, armed, guided, mode, length_state, seqnr_state, time_state);
 	//mvlnkwrtr.writer(is_valid_mavlink, len_mavlink, seq_mavlink, sysid_mavlink, compid_mavlink, msgid_mavlink, checksum_mavlink, payload_mavlink, length_mavlink, seqnr_mavlink, time_mavlink);
-	bttstwrtr.writer(cell_voltage, current, length_battstate, seqnr_battstate, time_battstate);
+	std::string filename_batterystatus = "batterydata";
+	bttstwrtr.writer(filename_batterystatus, cell_voltage, current, length_battstate, seqnr_battstate, time_battstate);
+
+//write data averaged to the nearest second by taking the median to file
+	std::vector<double> doubletime_mavtmp = clndata.convertTimeToDouble(time_mav_temp);
+	std::vector<std::vector<float> > median_mavtmp = clndata.calculateMedian(mavtmp, doubletime_mavtmp);
+	int length_median_mavtemp = median_mavtmp.size();
+	std::string filename_median_mavtemp = "mavtempdata_median";
+	clndata.writer(filename_median_mavtemp, length_median_mavtemp, median_mavtmp);
+	
 
 	return 0;
 }
