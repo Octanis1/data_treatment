@@ -549,7 +549,7 @@ void RCInWriter::writer(std::string filename, std::vector<int> rssi, std::vector
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Time" << ";" << "RSSI" << ";" << "Internal_humidity_percent" << ";" << "External_humidity_percent" << ";" << "External_temperature" << ";" << "External_temperature_C" << ";" << "UV_light" << ";" << "IR_light" << ";" << "Visual_light_Lux" << ";" << "Deep_UV_light" << ";" << "Radioactivitiy_CPM" << ";" << "Health_effect" << std::endl;
+	file << "Time" << ";" << "RSSI" << ";" << "Internal_humidity_percent" << ";" << "External_humidity_percent" << ";" << "External_temperature" << ";" << "External_temperature_C" << ";" << "UV_light" << ";" << "IR_light" << ";" << "Visual_light_Lux" << ";" << "Deep_UV_light" << ";" << "Radioactivity_CPM" << ";" << "Health_effect" << std::endl;
 	for (int i = 0; i < length; i++){
 		std::vector<short unsigned int> channel = channels[i];
 		std::vector<float> channel_float;
