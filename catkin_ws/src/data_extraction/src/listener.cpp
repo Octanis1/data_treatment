@@ -549,17 +549,22 @@ void RCInWriter::writer(std::string filename, std::vector<int> rssi, std::vector
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	int nr_channels = channels[0].size();
-	std::stringstream tt;
-	for (int i = 0; i < nr_channels; i++){
-		tt << ";";
-		tt << "Channel" << " " << i+1 ;
-	}
-	file << "Time" << ";" << "RSSI" << tt.str() << std::endl;
+	file << "Time" << ";" << "RSSI" << ";" << "Internal_humidity_percent" << ";" << "External_humidity_percent" << ";" << "External_temperature" << ";" << "External_temperature_C" << ";" << "UV_light" << ";" << "IR_light" << ";" << "Visual_light_Lux" << ";" << "Deep_UV_light" << ";" << "Radioactivitiy_CPM" << ";" << "Health_effect" << std::endl;
 	for (int i = 0; i < length; i++){
 		std::vector<short unsigned int> channel = channels[i];
+		std::vector<float> channel_float;
+		channel_float.push_back(static_cast< float >(channel[0]) / 100);
+		channel_float.push_back(static_cast< float >(channel[1]) / 1000);
+		channel_float.push_back(static_cast< float >(channel[2]));
+		channel_float.push_back((static_cast< float >(channel[3]) - 273.15) / 100);
+		channel_float.push_back((0.00391 * static_cast< float >(channel[4]) * static_cast< float >(channel[4]) / 2.44 + static_cast< float >(channel[4]) / 1.56) * 0.0187);
+		channel_float.push_back(static_cast< float >(channel[5]));
+		channel_float.push_back(static_cast< float >(channel[6]));
+		channel_float.push_back(static_cast< float >(channel[7]));
+		channel_float.push_back(static_cast< float >(channel[8]));
+		channel_float.push_back(static_cast< float >(channel[9]));
 		std::stringstream ss;
-		std::copy(channel.begin(), channel.end(), std::ostream_iterator<short unsigned int>(ss, ";"));	
+		std::copy(channel_float.begin(), channel_float.end(), std::ostream_iterator<float>(ss, ";"));	
 		std::string s = ss.str();
 		s = s.substr(0, s.length()-1);		
 		file << time[i] << ";" << rssi[i] << ";" << s << std::endl;
@@ -744,6 +749,10 @@ int main(int argc, char **argv){
 	ros::NodeHandle n;
 	Listener lstnr;
 
+	std::cout << "Subscribing to topics and storing/treating the data contained therein. Upon exiting the programme, the data is written to csv files stored in the folder catkin_ws." << std::endl;
+	std::cout << " " << std::endl;
+	std::cout << "NOTE: Let the code run for at least 1 min to avoid segmentation fault errors due to missing data streams from topics with low publishing rates." << std::endl;
+
 //declare the writer classes
 	TempWriter tmpwrtr;
 	IMUWriter imuwrtr;
@@ -824,8 +833,6 @@ int main(int argc, char **argv){
 //write the data to file with the writer functions of the writer classes
 	std::string filename_tmp = "tempdata";
 	std::vector<double> time_temp_double = clndata.convertTimeToDouble(time_temp);
-	for (int i = 0; i < time_temp_double.size(); i++){
-	}
 	tmpwrtr.writer(filename_tmp, tmp, length_temp, time_temp_double);
 	std::string filename_imu = "imudata";
 	std::vector<double> time_imu_double = clndata.convertTimeToDouble(time_imu);
@@ -847,6 +854,7 @@ int main(int argc, char **argv){
 	std::string filename_batterystatus = "batterydata";
 	std::vector<double> time_battstate_double = clndata.convertTimeToDouble(time_battstate);
 	bttstwrtr.writer(filename_batterystatus, cell_voltage, current, length_battstate, time_battstate_double);
+
 //write data averaged to the nearest second by taking the median to file
 	std::string filename_median_temp = "tempdata_median";
 	std::vector<std::vector<float> > median_tmp_raw = clndata.calculateMedian(tmp, time_temp_double);
@@ -915,6 +923,83 @@ int main(int argc, char **argv){
 	}
 	int length_median_mavtmp = median_mavtmp.size();
 	mavtmpwrtr.writer(filename_median_mavtemp, median_mavtmp, length_median_mavtmp, median_time_mavtemp);
+	std::string filename_rcchannels_median = "rcchanneldata_median";
+	std::vector<float> channel0;
+	std::vector<float> channel1;
+	std::vector<float> channel2;
+	std::vector<float> channel3;
+	std::vector<float> channel4;
+	std::vector<float> channel5;
+	std::vector<float> channel6;
+	std::vector<float> channel7;
+	std::vector<float> channel8;
+	std::vector<float> channel9;
+	for (int i = 0; i < channels.size(); i++){
+		channel0.push_back(static_cast< float >(channels[i][0]));
+		channel1.push_back(static_cast< float >(channels[i][1]));
+		channel2.push_back(static_cast< float >(channels[i][2]));
+		channel3.push_back(static_cast< float >(channels[i][3]));
+		channel4.push_back(static_cast< float >(channels[i][4]));
+		channel5.push_back(static_cast< float >(channels[i][5]));
+		channel6.push_back(static_cast< float >(channels[i][6]));
+		channel7.push_back(static_cast< float >(channels[i][7]));
+		channel8.push_back(static_cast< float >(channels[i][8]));
+		channel9.push_back(static_cast< float >(channels[i][9]));
+	}
+	std::vector<std::vector<float> > median_channel0_raw = clndata.calculateMedian(channel0, time_rc_in_double);
+	std::vector<std::vector<float> > median_channel1_raw = clndata.calculateMedian(channel1, time_rc_in_double);
+	std::vector<std::vector<float> > median_channel2_raw = clndata.calculateMedian(channel2, time_rc_in_double);
+	std::vector<std::vector<float> > median_channel3_raw = clndata.calculateMedian(channel3, time_rc_in_double);
+	std::vector<std::vector<float> > median_channel4_raw = clndata.calculateMedian(channel4, time_rc_in_double);
+	std::vector<std::vector<float> > median_channel5_raw = clndata.calculateMedian(channel5, time_rc_in_double);
+	std::vector<std::vector<float> > median_channel6_raw = clndata.calculateMedian(channel6, time_rc_in_double);
+	std::vector<std::vector<float> > median_channel7_raw = clndata.calculateMedian(channel7, time_rc_in_double);
+	std::vector<std::vector<float> > median_channel8_raw = clndata.calculateMedian(channel8, time_rc_in_double);
+	std::vector<std::vector<float> > median_channel9_raw = clndata.calculateMedian(channel9, time_rc_in_double);
+	std::vector<float> median_channel0;
+	std::vector<float> median_channel1;
+	std::vector<float> median_channel2;
+	std::vector<float> median_channel3;
+	std::vector<float> median_channel4;
+	std::vector<float> median_channel5;
+	std::vector<float> median_channel6;
+	std::vector<float> median_channel7;
+	std::vector<float> median_channel8;
+	std::vector<float> median_channel9;
+	std::vector<double> median_channels_time;
+	for (int i = 0; i < median_channel0_raw.size(); i++){
+		median_channel0.push_back(median_channel0_raw[i][0]);
+		median_channel1.push_back(median_channel1_raw[i][0]);
+		median_channel2.push_back(median_channel2_raw[i][0]);
+		median_channel3.push_back(median_channel3_raw[i][0]);
+		median_channel4.push_back(median_channel4_raw[i][0]);
+		median_channel5.push_back(median_channel5_raw[i][0]);
+		median_channel6.push_back(median_channel6_raw[i][0]);
+		median_channel7.push_back(median_channel7_raw[i][0]);
+		median_channel8.push_back(median_channel8_raw[i][0]);
+		median_channel9.push_back(median_channel9_raw[i][0]);
+		median_channels_time.push_back(median_channel0_raw[i][1]);
+	}
+	std::vector<std::vector<short unsigned int> > median_channels;
+	std::vector<int> median_rssi;
+	int is_nan = NAN;
+	for (int i = 0; i < median_channel0.size(); i++){
+		std::vector<short unsigned int> median_channel_point;
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel0[i]));
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel1[i]));
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel2[i]));
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel3[i]));
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel4[i]));
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel5[i]));
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel6[i]));
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel7[i]));
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel8[i]));
+		median_channel_point.push_back(static_cast< short unsigned int >(median_channel9[i]));
+		median_channels.push_back(median_channel_point);
+		median_rssi.push_back(is_nan);
+	}
+	int length_median_rc_channels = median_channels.size();
+	rcinwrtr.writer(filename_rcchannels_median, median_rssi, median_channels, length_median_rc_channels, median_channels_time);
 	std::string filename_batterystatus_median = "batterydata_median";
 	std::vector<float> current_in;
 	std::vector<float> solar_power;
@@ -951,5 +1036,6 @@ int main(int argc, char **argv){
 	int length_median_battery = median_current.size();
 	bttstwrtr.writer(filename_batterystatus_median, median_cell_voltage, median_current, length_median_battery, median_batterystatus_time);
 
+std::cout << "Data has been written to file." << std::endl;
 	return 0;
 }
