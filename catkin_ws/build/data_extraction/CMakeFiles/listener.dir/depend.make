@@ -6,6 +6,9 @@ data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/incl
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/XmlRpcValue.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/geometry_msgs/Quaternion.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/geometry_msgs/Vector3.h
+data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/mavros_msgs/Mavlink.h
+data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/mavros_msgs/RCIn.h
+data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/mavros_msgs/State.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/mavros_msgs/Waypoint.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/mavros_msgs/WaypointList.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/ros/advertise_options.h
@@ -62,6 +65,7 @@ data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/incl
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/ros/wall_timer.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/ros/wall_timer_options.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/rosconsole/macros_generated.h
+data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/sensor_msgs/BatteryState.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/sensor_msgs/FluidPressure.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/sensor_msgs/Imu.h
 data_extraction/CMakeFiles/listener.dir/src/listener.cpp.o: /opt/ros/indigo/include/sensor_msgs/Temperature.h
