@@ -1,7 +1,7 @@
 
 #Script for analysing the data from the Constellation Rover__________________________________________________
 
-getwd() #know your current working directory. If it is not the one where the data files are stored, change it with setwd("path") or set file path when loading files
+#note: create a folder called 'figures' in your working directory prior to running the script.
 
 #Installing packages_________________________________________________________________________________________
 
@@ -17,19 +17,30 @@ library(psych)
 
 #Importing data______________________________________________________________________________________________
 
-batterydata <- read.csv(file = "batterydata", header = TRUE, sep = ";")
-batterydata_median <- read.csv(file = "batterydata_median", header = TRUE, sep = ";")
-imudata <- read.csv(file = "imudata", header = TRUE, sep = ";")
-imudata_median <- read.csv(file = "imudata_median", header = TRUE, sep = ";")
-mavpressdata <- read.csv(file = "mavpressdata", header = TRUE, sep = ";")
-mavpressdata_median <- read.csv(file = "median_mavpressdata", header = TRUE, sep = ";")
-mavtempdata <- read.csv(file = "mavtempdata", header = TRUE, sep = ";")
-mavtempdata_median <- read.csv(file = "mavtempdata_median", header = TRUE, sep = ";")
-rcchanneldata <- read.csv(file = "rcchanneldata", header = TRUE, sep = ";")
-rcchanneldata_median <- read.csv(file = "rcchanneldata_median", header = TRUE, sep = ";")
-statusdata <- read.csv(file = "statusdata", header = TRUE, sep = ";")
-tempdata <- read.csv(file = "tempdata", header = TRUE, sep = ";")
-tempdata_median <- read.csv(file = "tempdata_median", header = TRUE, sep = ";")
+batterydata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/batterydata", header = TRUE, sep = ";")
+batterydata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/batterydata_median", header = TRUE, sep = ";")
+imudata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/imudata", header = TRUE, sep = ";")
+imudata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/imudata_median", header = TRUE, sep = ";")
+mavpressdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/mavpressdata", header = TRUE, sep = ";")
+mavpressdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/median_mavpressdata", header = TRUE, sep = ";")
+mavtempdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/mavtempdata", header = TRUE, sep = ";")
+mavtempdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/mavtempdata_median", header = TRUE, sep = ";")
+rcchanneldata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/rcchanneldata", header = TRUE, sep = ";")
+rcchanneldata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/rcchanneldata_median", header = TRUE, sep = ";")
+statusdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/statusdata", header = TRUE, sep = ";")
+tempdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/tempdata", header = TRUE, sep = ";")
+tempdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/tempdata_median", header = TRUE, sep = ";")
+
+#Function to remove outliers_______________________________________________________________________________________________
+
+remove_outliers <- function(x, na.rm = TRUE, ...) {
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
 
 #Data exploration_____________________________________________________________________________________________
 
@@ -105,9 +116,8 @@ rcchanneldata_vislight_timeseriesplot <- rcchanneldata_vislight_timeseriesplot +
 ggsave("./figures/rcchanneldata_vislight_timeseriesplot.jpg")
 rcchanneldata_irlight_timeseriesplot <- ggplot(rcchanneldata_median, aes(Time, IR_light)) + geom_point() + geom_line()
 rcchanneldata_irlight_timeseriesplot <- rcchanneldata_irlight_timeseriesplot + theme_bw()
-rcchanneldata_irlight_timeseriesplot
 ggsave("./figures/rcchanneldata_irlight_timeseriesplot.jpg")
-rcchanneldata_radioactivity_timeseriesplot <- ggplot(rcchanneldata_median, aes(Time, Radioactivitiy_CPM)) + geom_point() + geom_line()
+rcchanneldata_radioactivity_timeseriesplot <- ggplot(rcchanneldata_median, aes(Time, Radioactivity_CPM)) + geom_point() + geom_line()
 rcchanneldata_radioactivity_timeseriesplot <- rcchanneldata_radioactivity_timeseriesplot + theme_bw()
 ggsave("./figures/rcchanneldata_radioactivity_timeseriesplot.jpg")
 
@@ -166,11 +176,98 @@ jpeg(filename = "./figures/rcchanneldata_vislight_boxplot.jpg")
 boxplot(rcchanneldata_median$Visual_light_Lux, ylab = "Visual light Lux")
 dev.off()
 jpeg(filename = "./figures/rcchanneldata_radioactivity_boxplot.jpg")
-boxplot(rcchanneldata_median$Radioactivitiy_CPM, ylab = "Radioactivity CPM")
+boxplot(rcchanneldata_median$Radioactivity_CPM, ylab = "Radioactivity CPM")
 dev.off()
 
 jpeg(filename = "./figures/tempdata_boxplot.jpg")
 boxplot(rcchanneldata_median$External_temperature_C, mavtempdata_median$Temperature, tempdata_median$Temperature, ylab = "Ext. temperature °C", names = c("RC Channel", "mavros/temp", "imu/temp"))
+dev.off()
+
+#QQ plots
+
+jpeg(filename = "./figures/batterydata_currentin_qqplot.jpg")
+qqnorm(batterydata_median$Current_in_Ampere)
+qqline(batterydata_median$Current_in_Ampere)
+dev.off()
+jpeg(filename = "./figures/batterydata_currentout_qqplot.jpg")
+qqnorm(batterydata_median$Current_out_Ampere)
+qqline(batterydata_median$Current_out_Ampere)
+dev.off()
+jpeg(filename = "./figures/batterydata_solarvoltage_qqplot.jpg")
+qqnorm(batterydata_median$Solar_voltage_Volt)
+qqline(batterydata_median$Solar_voltage_Volt)
+dev.off()
+jpeg(filename = "./figures/batterydata_estsolarpower_qqplot.jpg")
+qqnorm(batterydata_median$Est_solar_power_Watt)
+qqline(batterydata_median$Est_solar_power_Watt)
+dev.off()
+
+jpeg(filename = "./figures/imudata_angvelx_qqplot.jpg")
+qqnorm(imudata_median$Angular_velocity_x)
+qqline(imudata_median$Angular_velocity_x)
+dev.off()
+jpeg(filename = "./figures/imudata_angvely_qqplot.jpg")
+qqnorm(imudata_median$Angular_velocity_y)
+qqline(imudata_median$Angular_velocity_y)
+dev.off()
+jpeg(filename = "./figures/imudata_angvelz_qqplot.jpg")
+qqnorm(imudata_median$Angular_velocity_z)
+qqline(imudata_median$Angular_velocity_z)
+dev.off()
+jpeg(filename = "./figures/imudata_linaccx_qqplot.jpg")
+qqnorm(imudata_median$Linear_acceleration_x)
+qqline(imudata_median$Linear_acceleration_x)
+dev.off()
+jpeg(filename = "./figures/imudata_linaccy_qqplot.jpg")
+qqnorm(imudata_median$Linear_acceleration_y)
+qqline(imudata_median$Linear_acceleration_y)
+dev.off()
+jpeg(filename = "./figures/imudata_linaccz_qqplot.jpg")
+qqnorm(imudata_median$Linear_acceleration_z)
+qqline(imudata_median$Linear_acceleration_z)
+dev.off()
+
+jpeg(filename = "./figures/mavpressdata_fluidpress_qqplot.jpg")
+qqnorm(mavpressdata_median$Fluid_pressure)
+qqline(mavpressdata_median$Fluid_pressure)
+dev.off()
+
+jpeg(filename = "./figures/rcchanneldata_inthumidity_qqplot.jpg")
+qqnorm(rcchanneldata_median$Internal_humidity_percent)
+qqline(rcchanneldata_median$Internal_humidity_percent)
+dev.off()
+jpeg(filename = "./figures/rcchanneldata_exthumidity_qqplot.jpg")
+qqnorm(rcchanneldata_median$External_humidity_percent)
+qqline(rcchanneldata_median$External_humidity_percent)
+dev.off()
+jpeg(filename = "./figures/rcchanneldata_uvlight_qqplot.jpg")
+qqnorm(rcchanneldata_median$UV_light)
+qqline(rcchanneldata_median$UV_light)
+dev.off()
+jpeg(filename = "./figures/rcchanneldata_irlight_qqplot.jpg")
+qqnorm(rcchanneldata_median$IR_light)
+qqline(rcchanneldata_median$IR_light)
+dev.off()
+jpeg(filename = "./figures/rcchanneldata_vislight_qqplot.jpg")
+qqnorm(rcchanneldata_median$Visual_light_Lux)
+qqline(rcchanneldata_median$Visual_light_Lux)
+dev.off()
+jpeg(filename = "./figures/rcchanneldata_radioactivity_qqplot.jpg")
+qqnorm(rcchanneldata_median$Radioactivity_CPM)
+qqline(rcchanneldata_median$Radioactivity_CPM)
+dev.off()
+
+jpeg(filename = "./figures/tempdata_rcchannel_qqplot.jpg")
+qqnorm(remove_outliers(rcchanneldata_median$External_temperature_C))
+qqline(remove_outliers(rcchanneldata_median$External_temperature_C))
+dev.off()
+jpeg(filename = "./figures/tempdata_mavros_qqplot.jpg")
+qqnorm(remove_outliers(mavtempdata_median$Temperature))
+qqline(remove_outliers(mavtempdata_median$Temperature))
+dev.off()
+jpeg(filename = "./figures/tempdata_imu_qqplot.jpg")
+qqnorm(remove_outliers(tempdata_median$Temperature))
+qqline(remove_outliers(tempdata_median$Temperature))
 dev.off()
 
 #Merge data sets for further analysis______________________________________________________________________________________
@@ -180,17 +277,6 @@ mergeddata2 <- merge(mergeddata1, mavpressdata_median, by = "Time", all=TRUE)
 mergeddata3 <- merge(mergeddata2, mavtempdata_median, by = "Time", all=TRUE)
 mergeddata4 <- merge(mergeddata3, rcchanneldata_median, by = "Time", all=TRUE)
 mergeddata <- merge(mergeddata4, tempdata_median, by = "Time", all=TRUE)
-
-#Function to remove outliers_______________________________________________________________________________________________
-
-remove_outliers <- function(x, na.rm = TRUE, ...) {
-  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
-  H <- 1.5 * IQR(x, na.rm = na.rm)
-  y <- x
-  y[x < (qnt[1] - H)] <- NA
-  y[x > (qnt[2] + H)] <- NA
-  y
-}
 
 #Clean temperature data in merged data set
 
@@ -228,3 +314,4 @@ Rsq_acc <- format(Rsq_acc, digits = 4)
 legend("topright", bty="n", legend=paste("R^2 = ", Rsq_temp))
 dev.off()
 
+#cat("\014") #to clean the console
