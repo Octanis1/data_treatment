@@ -17,19 +17,19 @@ library(psych)
 
 #Importing data______________________________________________________________________________________________
 
-batterydata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/batterydata", header = TRUE, sep = ";")
-batterydata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/batterydata_median", header = TRUE, sep = ";")
-imudata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/imudata", header = TRUE, sep = ";")
-imudata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/imudata_median", header = TRUE, sep = ";")
-mavpressdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/mavpressdata", header = TRUE, sep = ";")
-mavpressdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/median_mavpressdata", header = TRUE, sep = ";")
-mavtempdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/mavtempdata", header = TRUE, sep = ";")
-mavtempdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/mavtempdata_median", header = TRUE, sep = ";")
-rcchanneldata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/rcchanneldata", header = TRUE, sep = ";")
-rcchanneldata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/rcchanneldata_median", header = TRUE, sep = ";")
-statusdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/statusdata", header = TRUE, sep = ";")
-tempdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/tempdata", header = TRUE, sep = ";")
-tempdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-09-13-15-00-24_2_/tempdata_median", header = TRUE, sep = ";")
+batterydata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/batterydata", header = TRUE, sep = ";")
+batterydata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/batterydata_median", header = TRUE, sep = ";")
+imudata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/imudata", header = TRUE, sep = ";")
+imudata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/imudata_median", header = TRUE, sep = ";")
+mavpressdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/mavpressdata", header = TRUE, sep = ";")
+mavpressdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/median_mavpressdata", header = TRUE, sep = ";")
+mavtempdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/mavtempdata", header = TRUE, sep = ";")
+mavtempdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/mavtempdata_median", header = TRUE, sep = ";")
+rcchanneldata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/rcchanneldata", header = TRUE, sep = ";")
+rcchanneldata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/rcchanneldata_median", header = TRUE, sep = ";")
+statusdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/statusdata", header = TRUE, sep = ";")
+tempdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/tempdata", header = TRUE, sep = ";")
+tempdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/tempdata_median", header = TRUE, sep = ";")
 
 #Function to remove outliers_______________________________________________________________________________________________
 
@@ -294,8 +294,20 @@ Rsq_temp <- format(Rsq_temp, digits = 4)
 legend("topright", bty="n", legend=paste("R^2 = ", Rsq_temp))
 dev.off()
 
+jpeg(filename = "./figures/tempdata_scatterplot2.jpg")
+plot(mergeddata$Temperature.x, mergeddata$Temperature.y, xlab = "mavros/temp", ylab = "imu/temp")
+abline(lm_temp <- lm(mergeddata$Temperature.y ~ mergeddata$Temperature.x))
+Rsq_temp <- summary(lm_temp)$adj.r.squared
+Rsq_temp <- format(Rsq_temp, digits = 4)
+legend("topright", bty="n", legend=paste("R^2 = ", Rsq_temp))
+dev.off()
+
+mergeddata["xaccelpos"] <- ifelse(mergeddata$Linear_acceleration_x < 0, NA, mergeddata$Linear_acceleration_x)
+mergeddata["yaccelpos"] <- ifelse(mergeddata$Linear_acceleration_y < 0, NA, mergeddata$Linear_acceleration_y)
+mergeddata["linacczero"] <- mergeddata$Linear_acceleration_z + 9.807
+mergeddata["zaccelpos"] <- ifelse(mergeddata$linacczero < 0, NA, mergeddata$linacczero)
+mergeddata["Total_acceleration"] <- mergeddata$xaccelpos + mergeddata$yaccelpos + mergeddata$zaccelpos
 mergeddata["Total_velocity"] <- (abs(mergeddata$Angular_velocity_x) + abs(mergeddata$Angular_velocity_y) + abs(mergeddata$Angular_velocity_z))
-mergeddata["Total_acceleration"] <- (abs(mergeddata$Linear_acceleration_x) + abs(mergeddata$Linear_acceleration_y) + abs(mergeddata$Linear_acceleration_z + 9.8))
 mergeddata["Current_out_Ampere_abs"] <- abs(mergeddata$Current_out_Ampere)
 
 jpeg(filename = "./figures/velocitydata_scatterplot.jpg")
