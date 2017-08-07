@@ -17,19 +17,21 @@ library(psych)
 
 #Importing data______________________________________________________________________________________________
 
-batterydata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/batterydata", header = TRUE, sep = ";")
-batterydata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/batterydata_median", header = TRUE, sep = ";")
-imudata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/imudata", header = TRUE, sep = ";")
-imudata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/imudata_median", header = TRUE, sep = ";")
-mavpressdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/mavpressdata", header = TRUE, sep = ";")
-mavpressdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/median_mavpressdata", header = TRUE, sep = ";")
-mavtempdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/mavtempdata", header = TRUE, sep = ";")
-mavtempdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/mavtempdata_median", header = TRUE, sep = ";")
-rcchanneldata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/rcchanneldata", header = TRUE, sep = ";")
-rcchanneldata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/rcchanneldata_median", header = TRUE, sep = ";")
-statusdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/statusdata", header = TRUE, sep = ";")
-tempdata <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/tempdata", header = TRUE, sep = ";")
-tempdata_median <- read.csv(file = "~/octanis/data_treatment/datafiles/data_2016-08-21-13-06-40_glacier/tempdata_median", header = TRUE, sep = ";")
+#note: Adjust file path
+
+batterydata <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/batterydata", header = TRUE, sep = ";")
+batterydata_median <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/batterydata_median", header = TRUE, sep = ";")
+imudata <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/imudata", header = TRUE, sep = ";")
+imudata_median <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/imudata_median", header = TRUE, sep = ";")
+mavpressdata <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/mavpressdata", header = TRUE, sep = ";")
+mavpressdata_median <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/median_mavpressdata", header = TRUE, sep = ";")
+mavtempdata <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/mavtempdata", header = TRUE, sep = ";")
+mavtempdata_median <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/mavtempdata_median", header = TRUE, sep = ";")
+rcchanneldata <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/rcchanneldata", header = TRUE, sep = ";")
+rcchanneldata_median <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/rcchanneldata_median", header = TRUE, sep = ";")
+statusdata <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/statusdata", header = TRUE, sep = ";")
+tempdata <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/tempdata", header = TRUE, sep = ";")
+tempdata_median <- read.csv(file = "~/octanis/data_treatment/r_datatreatment/datafiles/tempdata_median", header = TRUE, sep = ";")
 
 #Function to remove outliers_______________________________________________________________________________________________
 
@@ -129,10 +131,20 @@ tempdata_timeseriesplot <- ggplot() +
   geom_line(data = tempdata_median, aes(x = Time, y = Temperature, color = "imu/temp")) +
   geom_point(data = tempdata_median, aes(x = Time, y = Temperature, color = "imu/temp")) +
   xlab('Time') +
-  ylab('Temperature °C') +
-  coord_cartesian(ylim = c(8, 21.5))
+  ylab('Temperature °C') 
 tempdata_timeseriesplot <- tempdata_timeseriesplot + theme_bw()
 ggsave("./figures/tempdata_timeseriesplot.jpg")
+
+tempdata_timeseriesplot2 <- ggplot() + 
+  geom_line(data = mavtempdata_median, aes(x = Time, y = Temperature, color = "mavros/temp")) +
+  geom_point(data = mavtempdata_median, aes(x = Time, y = Temperature, color = "mavros/temp")) +
+  geom_line(data = tempdata_median, aes(x = Time, y = Temperature, color = "imu/temp")) +
+  geom_point(data = tempdata_median, aes(x = Time, y = Temperature, color = "imu/temp")) +
+  xlab('Time') +
+  ylab('Temperature °C') 
+tempdata_timeseriesplot2 <- tempdata_timeseriesplot2 + theme_bw()
+ggsave("./figures/tempdata_timeseriesplot2.jpg")
+tempdata_timeseriesplot2
 
 #box plots
 
