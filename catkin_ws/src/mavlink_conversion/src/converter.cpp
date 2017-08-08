@@ -14,7 +14,6 @@ int main(int argc, char **argv){
 	ros::init(argc, argv, "converter");
 	ros::NodeHandle n;
 	ros::Subscriber sub = n.subscribe("mavlink/from", 1000, mavlinkCallback);
-
 	ros::spin();
 
 	std::cout << "test" << std::endl;
