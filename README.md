@@ -5,4 +5,4 @@ This repository is home to a catkin workspace containing various packages used t
 ## ROS Nodes
   * data_extraction
   * mavlink_conversion
-  * image_export - saves "/stereo/[right,left]_cam/image_raw" to a folder as JPG
+  * stereocamera_export - saves "/stereo/[right,left]_cam/image_raw" to a folder as JPG
