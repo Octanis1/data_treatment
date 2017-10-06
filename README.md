@@ -18,7 +18,7 @@ Some rosbags had to be reindexed for replay. All mission rosbags were prepended 
   * B_2016-09-19-08-28-16_0.bag / size=1.56GB,duration=1364s
   * C_2016-09-19-14-23-54_1.bag / size=854MB,duration=657s
   * D_2016-09-19-13-53-54_0.bag / size=2.53GB,duration=1794s
-    * images: 
+    * image extract (jpg): https://drive.google.com/file/d/0Bwa66ZQR4ocHV2xpajVDNDNuUVE/view?usp=sharing
   * E_2016-09-19-13-02-22_0.bag / size=1.5GB,duration=1102s
   * F_2016-09-19-12-52-19_0.bag / size=402MB,duration=301s
   * G_2016-09-19-08-56-13_0.bag / size=408MB,duration=334s
