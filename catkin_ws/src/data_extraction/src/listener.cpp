@@ -12,6 +12,12 @@ Identify the name of the .h file by executing 'rostopic type <topic>'*/
 #include "mavros_msgs/Mavlink.h"
 #include "sensor_msgs/BatteryState.h"
 #include "sensor_msgs/LaserScan.h"
+//#include "geometry_msgs/TransformStamped.h"
+//#include "geometry_msgs/Transform.h"
+//#include "geometry_msgs/Vector3.h"
+//#include "geometry_msgs/Quaternion.h"
+//#include "tf/tfMessage.h"
+#include "tf/transform_listener.h"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -42,7 +48,7 @@ class Listener{
 		//access member functions
 		void mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clbc); //subscriber mavlink/from
 		void battStateCallback(const sensor_msgs::BatteryState::ConstPtr& battstate_clbc); //subscriber mavros/battery
-		void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_clbc); //subscriber /scan
+		void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_clbc); //subscriber /scan and /tf
 		std::vector<float> & getTemperature();
 		std::vector<std::string> & getTimeTemp();
 		std::vector<float> & getAngularVelocityX();
@@ -98,6 +104,8 @@ class Listener{
 		std::vector<std::vector<float> > & getIntensitiesLaser();
 		std::vector<std::string> & getTimeLaser();
 	protected:
+		tf::TransformListener tfLstnr;
+
 		std::vector<float> temp; //vector of the temperature measurements (/imu/temp)
 		std::vector<std::string> time_temp; //vector of the time stamps (imu/temp)
 		std::vector<float> angular_vel_x; //vector of the angular velocity x values (/imu/raw)
@@ -533,6 +541,7 @@ std::vector<std::vector<float> > & Listener::getIntensitiesLaser(){
 std::vector<std::string> & Listener::getTimeLaser(){
 	return this -> time_laser;
 }
+
 
 /*--------------------------------------------------------------------------*/
 

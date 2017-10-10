@@ -1,0 +1,15 @@
+Positioning of laser cloud
+
+Take data point position (transform polar to rect), transform from LIDAR-TF to baselink-TF to dGPS-TF, create and apply rover rotation, add local frame dGPS offset to base station
+
+Filter / make sense of IMU data. No correspondence between images and IMU upright direction
+
+Find heading topic
+
+
+Transform and filter laser data:
+read all points from 0 to 80 and 280 to 360° as tripplets of range, angle and intensity. Ignore the other points. This is a larger range than the estimated 120° to use points when the rover was tilted
+throw away all point-triplets that have intensity 0 or lower than threshold (TBD) and range shorter than 0.06 m
+convert points to cartesian coordinates in LIDAR reference frame (x is forward, y is left, z is up -> x=r*cos(phi), y=r*sin(phi), z=0)
+
+First iteration forward movement and IMU movement neglected as rover is slow. IMU data might be interesting to add as left and right half are at beginning and end of scan. Forward movement has to be interpolated as slow dGPS update

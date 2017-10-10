@@ -117,6 +117,7 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/gtest/cmake_install.cmake")
+  include("/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/stereocamera_export/cmake_install.cmake")
   include("/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/data_extraction/cmake_install.cmake")
 
 endif()
