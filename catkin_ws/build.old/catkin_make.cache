@@ -1,2 +1,0 @@
-data_extraction:mavlink_conversion
--DCATKIN_DEVEL_PREFIX=/media/beat/FCB01BF8B01BB85A/Documents and Settings/beat/Documents/octanis/data_treatment/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/media/beat/FCB01BF8B01BB85A/Documents and Settings/beat/Documents/octanis/data_treatment/catkin_ws/install -G Unix Makefiles

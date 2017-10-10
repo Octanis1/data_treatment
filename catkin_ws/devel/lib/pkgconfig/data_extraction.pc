@@ -1,8 +1,0 @@
-prefix=/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/devel
-
-Name: data_extraction
-Description: Description of data_extraction
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/devel/lib 
-Requires: 
