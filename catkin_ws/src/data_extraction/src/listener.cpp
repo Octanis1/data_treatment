@@ -11,6 +11,7 @@ Identify the name of the .h file by executing 'rostopic type <topic>'*/
 #include "mavros_msgs/State.h"
 #include "mavros_msgs/Mavlink.h"
 #include "sensor_msgs/BatteryState.h"
+#include "sensor_msgs/LaserScan.h"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -41,6 +42,7 @@ class Listener{
 		//access member functions
 		void mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clbc); //subscriber mavlink/from
 		void battStateCallback(const sensor_msgs::BatteryState::ConstPtr& battstate_clbc); //subscriber mavros/battery
+		void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_clbc); //subscriber /scan
 		std::vector<float> & getTemperature();
 		std::vector<std::string> & getTimeTemp();
 		std::vector<float> & getAngularVelocityX();
@@ -69,8 +71,12 @@ class Listener{
 		std::vector<bool> & getGuided();
 		std::vector<std::string> & getMode();
 		std::vector<std::string> & getTimeState();
-		std::vector<bool> & getIsValidMavlink();
+		std::vector<int> & getFramingStatusMavlink();
+		std::vector<int> & getMagicMavlink();
 		std::vector<int> & getLenMavlink();
+		std::vector<int> & getIncompatFlagsMavlink();
+		std::vector<int> & getCompatFlagsMavlink();
+		std::vector<int> & getSeqMavlink();
 		std::vector<int> & getSysidMavlink();
 		std::vector<int> & getCompidMavlink();
 		std::vector<int> & getMsgidMavlink();
@@ -80,6 +86,17 @@ class Listener{
 		std::vector<std::vector<float> > & getCellVoltage();
 		std::vector<float> & getCurrent();
 		std::vector<std::string> & getTimeBatteryState();
+
+		std::vector<float> & getAngleMinLaser();
+		std::vector<float> & getAngleMaxLaser();
+		std::vector<float> & getAngleIncrementLaser();
+		std::vector<float> & getTimeIncrementLaser();
+		std::vector<float> & getScanTimeLaser();
+		std::vector<float> & getRangeMinLaser();
+		std::vector<float> & getRangeMaxLaser();
+		std::vector<std::vector<float> > & getRangesLaser();
+		std::vector<std::vector<float> > & getIntensitiesLaser();
+		std::vector<std::string> & getTimeLaser();
 	protected:
 		std::vector<float> temp; //vector of the temperature measurements (/imu/temp)
 		std::vector<std::string> time_temp; //vector of the time stamps (imu/temp)
@@ -109,8 +126,12 @@ class Listener{
 		std::vector<bool> guided; //vector of guided booleans (mavros/State)
 		std::vector<std::string> mode; //vector of mode (mavros/State)
 		std::vector<std::string> time_state; //vector of the time stamps (mavros/state)
-		std::vector<bool> is_valid_mavlink; 
+		std::vector<int> framing_status_mavlink;
+		std::vector<int> magic_mavlink;
 		std::vector<int> len_mavlink;
+		std::vector<int> incompat_flags_mavlink;
+		std::vector<int> compat_flags_mavlink;
+		std::vector<int> seq_mavlink;
 		std::vector<int> sysid_mavlink;
 		std::vector<int> compid_mavlink;
 		std::vector<int> msgid_mavlink;
@@ -120,6 +141,17 @@ class Listener{
 		std::vector<std::vector<float> > cell_voltage;
 		std::vector<float> current;
 		std::vector<std::string> time_battstate;
+
+		std::vector<float> angle_min_laser;
+		std::vector<float> angle_max_laser;
+		std::vector<float> angle_increment_laser;
+		std::vector<float> time_increment_laser;
+		std::vector<float> scan_time_laser;
+		std::vector<float> range_min_laser;
+		std::vector<float> range_max_laser;
+		std::vector<std::vector<float> > ranges_laser;
+		std::vector<std::vector<float> > intensities_laser;
+		std::vector<std::string> time_laser;
 };
 
 void Listener::tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc){
@@ -237,15 +269,23 @@ void Listener::mavStateCallback(const mavros_msgs::State::ConstPtr& mavState_clb
 }
 
 void Listener::mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clbc){
-	bool is_valid = mavlink_clbc -> is_valid;
+	int framing_status = mavlink_clbc -> framing_status;
+	int magic = mavlink_clbc -> magic;
 	int len = mavlink_clbc -> len;
+	int incompat_flags = mavlink_clbc -> incompat_flags;
+	int compat_flags = mavlink_clbc -> compat_flags;
+	int seq = mavlink_clbc -> seq;
 	int sysid = mavlink_clbc -> sysid;
 	int compid = mavlink_clbc -> compid;
 	int msgid = mavlink_clbc -> msgid;
 	int checksum = mavlink_clbc -> checksum;
 	std::vector<long unsigned int> payload = mavlink_clbc -> payload64;
-	this -> is_valid_mavlink.push_back(is_valid);
+	this -> framing_status_mavlink.push_back(framing_status);
+	this -> magic_mavlink.push_back(magic);
 	this -> len_mavlink.push_back(len);
+	this -> incompat_flags_mavlink.push_back(incompat_flags);
+	this -> compat_flags_mavlink.push_back(compat_flags);
+	this -> seq_mavlink.push_back(seq);
 	this -> sysid_mavlink.push_back(sysid);
 	this -> compid_mavlink.push_back(compid);
 	this -> msgid_mavlink.push_back(msgid);
@@ -272,6 +312,26 @@ void Listener::battStateCallback(const sensor_msgs::BatteryState::ConstPtr& batt
 	ss << secs << "." << nanosecs;
 	std::string time = ss.str();
 	this -> time_battstate.push_back(time);
+}
+
+void Listener::laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_clbc){
+	this -> angle_min_laser.push_back(laser_clbc -> angle_min);
+	this -> angle_max_laser.push_back(laser_clbc -> angle_max);
+	this -> angle_increment_laser.push_back(laser_clbc -> angle_increment);
+	this -> time_increment_laser.push_back(laser_clbc -> time_increment);
+	this -> scan_time_laser.push_back(laser_clbc -> scan_time);
+	this -> range_min_laser.push_back(laser_clbc -> range_min);
+	this -> range_max_laser.push_back(laser_clbc -> range_max);
+	this -> ranges_laser.push_back(laser_clbc -> ranges);
+	this -> intensities_laser.push_back(laser_clbc -> intensities);
+
+	std_msgs::Header hdr = laser_clbc -> header;
+	int secs = hdr.stamp.sec;
+	int nanosecs = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs << "." << nanosecs;
+	std::string time = ss.str();
+	this -> time_laser.push_back(time);
 }
 
 std::vector<float> & Listener::getTemperature(){
@@ -385,30 +445,36 @@ std::vector<std::string> & Listener::getTimeState(){
 	return this -> time_state;
 }
 
-std::vector<bool> & Listener::getIsValidMavlink(){
-	return this -> is_valid_mavlink;
+std::vector<int> & Listener::getFramingStatusMavlink(){
+	return this -> framing_status_mavlink;
 }
-
+std::vector<int> & Listener::getMagicMavlink(){
+	return this -> magic_mavlink;
+}
 std::vector<int> & Listener::getLenMavlink(){
 	return this -> len_mavlink;
 }
-
+std::vector<int> & Listener::getIncompatFlagsMavlink(){
+	return this -> incompat_flags_mavlink;
+}
+std::vector<int> & Listener::getCompatFlagsMavlink(){
+	return this -> compat_flags_mavlink;
+}
+std::vector<int> & Listener::getSeqMavlink(){
+	return this -> seq_mavlink;
+}
 std::vector<int> & Listener::getSysidMavlink(){
 	return this -> sysid_mavlink;
 }
-
 std::vector<int> & Listener::getCompidMavlink(){
 	return this -> compid_mavlink;
 }
-
 std::vector<int> & Listener::getMsgidMavlink(){
 	return this -> msgid_mavlink;
 }
-
 std::vector<int> & Listener::getChecksumMavlink(){
 	return this -> checksum_mavlink;
 }
-
 std::vector<std::vector<long unsigned int> > & Listener::getPayloadMavlink(){
 	return this -> payload_mavlink;
 }
@@ -426,6 +492,46 @@ std::vector<float> & Listener::getCurrent(){
 
 std::vector<std::string> & Listener::getTimeBatteryState(){
 	return this -> time_battstate;
+}
+
+std::vector<float> & Listener::getAngleMinLaser(){
+	return this -> angle_min_laser;
+}
+
+std::vector<float> & Listener::getAngleMaxLaser(){
+	return this -> angle_max_laser;
+}
+
+std::vector<float> & Listener::getAngleIncrementLaser(){
+	return this -> angle_increment_laser;
+}
+
+std::vector<float> & Listener::getTimeIncrementLaser(){
+	return this -> time_increment_laser;
+}
+
+std::vector<float> & Listener::getScanTimeLaser(){
+	return this -> scan_time_laser;
+}
+
+std::vector<float> & Listener::getRangeMinLaser(){
+	return this -> range_min_laser;
+}
+
+std::vector<float> & Listener::getRangeMaxLaser(){
+	return this -> range_max_laser;
+}
+
+std::vector<std::vector<float> > & Listener::getRangesLaser(){
+	return this -> ranges_laser;
+}
+
+std::vector<std::vector<float> > & Listener::getIntensitiesLaser(){
+	return this -> intensities_laser;
+}
+
+std::vector<std::string> & Listener::getTimeLaser(){
+	return this -> time_laser;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -598,10 +704,10 @@ void MavStateWriter::writer(std::string filename, std::vector<bool> connected, s
 
 class MavLinkWriter{
 	public:
-		void writer(std::string filename, std::vector<bool> is_valid, std::vector<int> len, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<double> time);
+		void writer(std::string filename, std::vector<int> framing_status, std::vector<int> magic, std::vector<int> len, std::vector<int> incompat_flags, std::vector<int> compat_flags, std::vector<int> seq, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<double> time);
 };
 
-void MavLinkWriter::writer(std::string filename, std::vector<bool> is_valid, std::vector<int> len, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<double> time){
+void MavLinkWriter::writer(std::string filename, std::vector<int> framing_status, std::vector<int> magic, std::vector<int> len, std::vector<int> incompat_flags, std::vector<int> compat_flags, std::vector<int> seq, std::vector<int> sysid, std::vector<int> compid, std::vector<int> msgid, std::vector<int> checksum, std::vector<std::vector<long unsigned int> > payload, int length, std::vector<double> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
@@ -613,14 +719,14 @@ void MavLinkWriter::writer(std::string filename, std::vector<bool> is_valid, std
 		tt << ";";
 		tt << "payload";
 	}
-	file << "Time" << ";" << "is_valid" << ";" << "len" << ";" << "sysid" << ";" << "compid" << ";" << "msgid" << ";" << "checksum" << ";" << tt.str() << std::endl;
+	file << "Time" << ";" << "framing_status" << ";" << "magic" << ";" << "len" << ";" << "incompat_flags" << ";" << "compat_flags" << ";" << "seq" << ";" << "sysid" << ";" << "compid" << ";" << "msgid" << ";" << "checksum" << ";" << tt.str() << std::endl;
 	for (int i = 0; i < length; i++){
 		std::vector<long unsigned int> payloadx = payload[i];
 		std::stringstream ss;
 		std::copy(payloadx.begin(), payloadx.end(), std::ostream_iterator<long unsigned int>(ss, ";"));	
 		std::string s = ss.str();
-		s = s.substr(0, s.length()-1);		
-		file << time[i] << ";" << is_valid[i] << ";" << len[i] << ";" << sysid[i] << ";" << compid[i] << ";" << msgid[i] << ";" << checksum[i] << ";" << s << std::endl;
+		s = s.substr(0, s.length()-1);
+		file << time[i] << ";" << framing_status[i] << ";" << magic[i] << ";" << len[i] << ";" << incompat_flags[i] << ";" << compat_flags[i] << ";" << seq[i] << ";" << sysid[i] << ";" << compid[i] << ";" << msgid[i] << ";" << checksum[i] << ";" << s << std::endl;
 	}
 }
 
@@ -642,6 +748,41 @@ void BattStateWriter::writer(std::string filename, std::vector<std::vector<float
 	file << "Time" << ";" << "Current_in_Ampere" << ";" << "Current_out_Ampere" << ";" << "Solar_voltage_Volt" << ";" << "Est_solar_power_Watt" << std::endl;
 	for (int i = 0; i < length; i++){
 		file << time[i] << ";" << cell_voltage[i][2] / 1000 << ";" << current[i] / 100 << ";" << cell_voltage[i][1] / 1000 << ";" << (cell_voltage[i][0] / 1000) * (cell_voltage[i][2] / 1000) / 0.9 << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
+/*LaserWriter class: writes the laser range data to csv file (includes a header row)*/
+
+class LaserWriter{
+	public:
+		void writer(std::string filename, std::vector<float> angle_min, std::vector<float> angle_max, std::vector<float> angle_increment, std::vector<float> time_increment, std::vector<float> scan_time, std::vector<float> range_min, std::vector<float> range_max, std::vector<std::vector<float> > ranges, std::vector<std::vector<float> > intensities, int length, std::vector<double> time);
+};
+
+void LaserWriter::writer(std::string filename, std::vector<float> angle_min, std::vector<float> angle_max, std::vector<float> angle_increment, std::vector<float> time_increment, std::vector<float> scan_time, std::vector<float> range_min, std::vector<float> range_max, std::vector<std::vector<float> > ranges, std::vector<std::vector<float> > intensities, int length, std::vector<double> time){
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "start angle of the scan [rad]" << ";" << "end angle of the scan [rad]" << ";" << "angular distance between measurements [rad]" << ";" << "time between measurements [seconds]" << ";" << "minimum range value [m]" << ";" << "maximum range value [m]" << ";" << "range data [m]" << ";" << "intensity data [device-specific units]" << std::endl;
+
+	for (int i = 0; i < length; i++){
+
+		std::vector<float> ranges_i = ranges[i];
+		std::stringstream ss_ranges;
+		std::copy(ranges_i.begin(), ranges_i.end(), std::ostream_iterator<float>(ss_ranges, ","));	
+		std::string s_ranges = ss_ranges.str();
+		s_ranges = s_ranges.substr(0, s_ranges.length()-1);
+
+		std::vector<float> intensities_i = intensities[i];
+		std::stringstream ss_intensities;
+		std::copy(intensities_i.begin(), intensities_i.end(), std::ostream_iterator<float>(ss_intensities, ","));	
+		std::string s_intensities = ss_intensities.str();
+		s_intensities = s_intensities.substr(0, s_intensities.length()-1);
+
+		file << time[i] << ";" << angle_min[i] << ";" << angle_max[i] << ";" << angle_increment[i] << ";" << time_increment[i] << ";" << scan_time[i] << ";" << range_min[i] << ";" << range_max[i] << ";" << angle_increment[i] << ";" << s_ranges << ";" << s_intensities << std::endl;
 	}
 }
 
@@ -761,8 +902,9 @@ int main(int argc, char **argv){
 	//MissionWaypointWriter mssnwptwrtr;
 	RCInWriter rcinwrtr;
 	MavStateWriter stwrtr;
-	//MavLinkWriter mvlnkwrtr;
+	MavLinkWriter mvlnkwrtr;
 	BattStateWriter bttstwrtr;
+	LaserWriter lsrwrtr;
 
 //declare the clean data class
 	CleanData clndata;
@@ -775,8 +917,9 @@ int main(int argc, char **argv){
 	//ros::Subscriber sub5 = n.subscribe("mavros/mission/waypoints", 1000, &Listener::missionWaypointCallback, &lstnr);
 	ros::Subscriber sub6 = n.subscribe("mavros/rc/in", 1000, &Listener::mavRCInCallback, &lstnr);
 	ros::Subscriber sub7 = n.subscribe("mavros/state", 1000, &Listener::mavStateCallback, &lstnr);
-	//ros::Subscriber sub8 = n.subscribe("mavlink/from", 1000, &Listener::mavLinkCallback, &lstnr);
+	ros::Subscriber sub8 = n.subscribe("mavlink/from", 1000, &Listener::mavLinkCallback, &lstnr);
 	ros::Subscriber sub9 = n.subscribe("mavros/battery", 1000, &Listener::battStateCallback, &lstnr);
+	ros::Subscriber sub10 = n.subscribe("/scan", 1000, &Listener::laserCallback, &lstnr);
 
 	ros::spin();
 
@@ -816,19 +959,35 @@ int main(int argc, char **argv){
 	std::vector<std::string> mode = lstnr.getMode();
 	int length_state = connected.size();
 	std::vector<std::string> time_state = lstnr.getTimeState();
-	std::vector<bool> is_valid_mavlink = lstnr.getIsValidMavlink();
-	//std::vector<int> len_mavlink = lstnr.getLenMavlink();
-	//std::vector<int> sysid_mavlink = lstnr.getSysidMavlink();
-	//std::vector<int> compid_mavlink = lstnr.getCompidMavlink();
-	//std::vector<int> msgid_mavlink = lstnr.getMsgidMavlink();
-	//std::vector<int> checksum_mavlink = lstnr.getChecksumMavlink();
-	//std::vector<std::vector<long unsigned int> > payload_mavlink = lstnr.getPayloadMavlink();
-	//int length_mavlink = is_valid_mavlink.size();
-	//std::vector<std::string> time_mavlink = lstnr.getTimeMavlink();
+	std::vector<int> framing_status_mavlink = lstnr.getFramingStatusMavlink();
+	std::vector<int> magic_mavlink = lstnr.getMagicMavlink();
+	std::vector<int> len_mavlink = lstnr.getLenMavlink();
+	std::vector<int> incompat_flags_mavlink = lstnr.getIncompatFlagsMavlink();
+	std::vector<int> compat_flags_mavlink = lstnr.getCompatFlagsMavlink();
+	std::vector<int> seq_mavlink = lstnr.getSeqMavlink();
+	std::vector<int> sysid_mavlink = lstnr.getSysidMavlink();
+	std::vector<int> compid_mavlink = lstnr.getCompidMavlink();
+	std::vector<int> msgid_mavlink = lstnr.getMsgidMavlink();
+	std::vector<int> checksum_mavlink = lstnr.getChecksumMavlink();
+	std::vector<std::vector<long unsigned int> > payload_mavlink = lstnr.getPayloadMavlink();
+	int length_mavlink = framing_status_mavlink.size();
+	std::vector<std::string> time_mavlink = lstnr.getTimeMavlink();
 	std::vector<std::vector<float> > cell_voltage = lstnr.getCellVoltage();
 	std::vector<float> current = lstnr.getCurrent();
 	int length_battstate = current.size();
 	std::vector<std::string> time_battstate = lstnr.getTimeBatteryState();
+
+	std::vector<float> angle_min_laser = lstnr.getAngleMinLaser();
+	std::vector<float> angle_max_laser = lstnr.getAngleMaxLaser();
+	std::vector<float> angle_increment_laser = lstnr.getAngleIncrementLaser();
+	std::vector<float> time_increment_laser = lstnr.getTimeIncrementLaser();
+	std::vector<float> scan_time_laser = lstnr.getScanTimeLaser();
+	std::vector<float> range_min_laser = lstnr.getRangeMinLaser();
+	std::vector<float> range_max_laser = lstnr.getRangeMaxLaser();
+	std::vector<std::vector<float> > ranges_laser = lstnr.getRangesLaser();
+	std::vector<std::vector<float> > intensities_laser = lstnr.getIntensitiesLaser();
+	int length_laser = angle_min_laser.size();
+	std::vector<std::string> time_laser = lstnr.getTimeLaser();
 
 //write the data to file with the writer functions of the writer classes
 	std::string filename_tmp = "tempdata";
@@ -847,13 +1006,21 @@ int main(int argc, char **argv){
 	std::string filename_rcchannels = "rcchanneldata";
 	std::vector<double> time_rc_in_double = clndata.convertTimeToDouble(time_rc_in);
 	rcinwrtr.writer(filename_rcchannels, rssi, channels, length_rcin, time_rc_in_double);
-	std::string filename_status = "statusdata";
-	std::vector<double> time_state_double = clndata.convertTimeToDouble(time_state);
-	stwrtr.writer(filename_status, connected, armed, guided, mode, length_state, time_state_double);
-	//mvlnkwrtr.writer(is_valid_mavlink, len_mavlink, sysid_mavlink, compid_mavlink, msgid_mavlink, checksum_mavlink, payload_mavlink, length_mavlink, time_mavlink);
+//	std::string filename_status = "statusdata";
+//	std::vector<double> time_state_double = clndata.convertTimeToDouble(time_state);
+//	stwrtr.writer(filename_status, connected, armed, guided, mode, length_state, time_state_double);
+
+	std::string filename_mavlink = "mavlinkdata";
+	std::vector<double> time_mavlink_double = clndata.convertTimeToDouble(time_mavlink);
+	mvlnkwrtr.writer(filename_mavlink, framing_status_mavlink, magic_mavlink, len_mavlink, incompat_flags_mavlink, compat_flags_mavlink, seq_mavlink, sysid_mavlink, compid_mavlink, msgid_mavlink, checksum_mavlink, payload_mavlink, length_mavlink, time_mavlink_double);
+	
 	std::string filename_batterystatus = "batterydata";
 	std::vector<double> time_battstate_double = clndata.convertTimeToDouble(time_battstate);
 	bttstwrtr.writer(filename_batterystatus, cell_voltage, current, length_battstate, time_battstate_double);
+
+	std::string filename_laser = "laserdata";
+	std::vector<double> time_laser_double = clndata.convertTimeToDouble(time_laser);
+	lsrwrtr.writer(filename_laser, angle_min_laser, angle_max_laser, angle_increment_laser, time_increment_laser, scan_time_laser, range_min_laser, range_max_laser, ranges_laser, intensities_laser, length_laser, time_laser_double);
 
 //write data averaged to the nearest second by taking the median to file
 	std::string filename_median_temp = "tempdata_median";

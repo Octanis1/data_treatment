@@ -7,6 +7,7 @@
 # new environment variables
 
 # modified environment variables
-export LD_LIBRARY_PATH="/home/viki/data_treatment/catkin_ws/devel/lib/x86_64-linux-gnu:/opt/ros/indigo/lib/x86_64-linux-gnu:/home/viki/data_treatment/catkin_ws/devel/lib:/opt/ros/indigo/lib"
-export PKG_CONFIG_PATH="/home/viki/data_treatment/catkin_ws/devel/lib/x86_64-linux-gnu/pkgconfig:/opt/ros/indigo/lib/x86_64-linux-gnu/pkgconfig:/home/viki/data_treatment/catkin_ws/devel/lib/pkgconfig:/opt/ros/indigo/lib/pkgconfig"
-export PWD="/home/viki/data_treatment/catkin_ws/build"
+export CMAKE_PREFIX_PATH="/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/devel:$CMAKE_PREFIX_PATH"
+export PWD="/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build"
+export ROSLISP_PACKAGE_DIRECTORIES="/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/devel/share/common-lisp"
+export ROS_PACKAGE_PATH="/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/src:$ROS_PACKAGE_PATH"

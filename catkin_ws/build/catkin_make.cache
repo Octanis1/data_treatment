@@ -1,1 +1,2 @@
 data_extraction
+-DCATKIN_DEVEL_PREFIX=/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/install -G Unix Makefiles

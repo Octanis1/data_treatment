@@ -1,23 +1,24 @@
 Determining if the pthread_create exist failed with the following output:
-Change Dir: /home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp
+Change Dir: /home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp
 
-Run Build Command:/usr/bin/make "cmTryCompileExec2593928319/fast"
-/usr/bin/make -f CMakeFiles/cmTryCompileExec2593928319.dir/build.make CMakeFiles/cmTryCompileExec2593928319.dir/build
-make[1]: Entering directory `/home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp'
-/usr/bin/cmake -E cmake_progress_report /home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp/CMakeFiles 1
-Building C object CMakeFiles/cmTryCompileExec2593928319.dir/CheckSymbolExists.c.o
-/usr/bin/cc    -o CMakeFiles/cmTryCompileExec2593928319.dir/CheckSymbolExists.c.o   -c /home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
-Linking C executable cmTryCompileExec2593928319
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec2593928319.dir/link.txt --verbose=1
-/usr/bin/cc       CMakeFiles/cmTryCompileExec2593928319.dir/CheckSymbolExists.c.o  -o cmTryCompileExec2593928319 -rdynamic 
-CMakeFiles/cmTryCompileExec2593928319.dir/CheckSymbolExists.c.o: In function `main':
+Run Build Command:"/usr/bin/make" "cmTC_f367f/fast"
+/usr/bin/make -f CMakeFiles/cmTC_f367f.dir/build.make CMakeFiles/cmTC_f367f.dir/build
+make[1]: Entering directory '/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f367f.dir/CheckSymbolExists.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_f367f.dir/CheckSymbolExists.c.o   -c /home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_f367f
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f367f.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_f367f.dir/CheckSymbolExists.c.o  -o cmTC_f367f -rdynamic 
+CMakeFiles/cmTC_f367f.dir/CheckSymbolExists.c.o: In function `main':
 CheckSymbolExists.c:(.text+0x16): undefined reference to `pthread_create'
 collect2: error: ld returned 1 exit status
-make[1]: Leaving directory `/home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp'
-make[1]: *** [cmTryCompileExec2593928319] Error 1
-make: *** [cmTryCompileExec2593928319/fast] Error 2
+CMakeFiles/cmTC_f367f.dir/build.make:97: recipe for target 'cmTC_f367f' failed
+make[1]: *** [cmTC_f367f] Error 1
+make[1]: Leaving directory '/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_f367f/fast' failed
+make: *** [cmTC_f367f/fast] Error 2
 
-File /home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+File /home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
 /* */
 #include <pthread.h>
 
@@ -33,21 +34,22 @@ int main(int argc, char** argv)
 }
 
 Determining if the function pthread_create exists in the pthreads failed with the following output:
-Change Dir: /home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp
+Change Dir: /home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp
 
-Run Build Command:/usr/bin/make "cmTryCompileExec3119526505/fast"
-/usr/bin/make -f CMakeFiles/cmTryCompileExec3119526505.dir/build.make CMakeFiles/cmTryCompileExec3119526505.dir/build
-make[1]: Entering directory `/home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp'
-/usr/bin/cmake -E cmake_progress_report /home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp/CMakeFiles 1
-Building C object CMakeFiles/cmTryCompileExec3119526505.dir/CheckFunctionExists.c.o
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTryCompileExec3119526505.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-2.8/Modules/CheckFunctionExists.c
-Linking C executable cmTryCompileExec3119526505
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec3119526505.dir/link.txt --verbose=1
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTryCompileExec3119526505.dir/CheckFunctionExists.c.o  -o cmTryCompileExec3119526505 -rdynamic -lpthreads 
+Run Build Command:"/usr/bin/make" "cmTC_495d8/fast"
+/usr/bin/make -f CMakeFiles/cmTC_495d8.dir/build.make CMakeFiles/cmTC_495d8.dir/build
+make[1]: Entering directory '/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_495d8.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_495d8.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_495d8
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_495d8.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_495d8.dir/CheckFunctionExists.c.o  -o cmTC_495d8 -rdynamic -lpthreads 
 /usr/bin/ld: cannot find -lpthreads
 collect2: error: ld returned 1 exit status
-make[1]: *** [cmTryCompileExec3119526505] Error 1
-make[1]: Leaving directory `/home/viki/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp'
-make: *** [cmTryCompileExec3119526505/fast] Error 2
+CMakeFiles/cmTC_495d8.dir/build.make:97: recipe for target 'cmTC_495d8' failed
+make[1]: *** [cmTC_495d8] Error 1
+make[1]: Leaving directory '/home/beat/Downloads/Octanis1-ROS-master/data_treatment/catkin_ws/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_495d8/fast' failed
+make: *** [cmTC_495d8/fast] Error 2
 
 
