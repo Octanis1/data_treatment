@@ -27,6 +27,8 @@ Identify the name of the .h file by executing 'rostopic type <topic>'*/
 #include <iterator>
 #include <algorithm>
 
+#include <MAVLink/common/mavlink.h>
+
 /*NOTES:
 #mavros/mission/waypoints: problem with message types; currently unresolved (not compiling if uncommented)
 */
@@ -46,7 +48,7 @@ class Listener{
 		void mavRCInCallback(const mavros_msgs::RCIn::ConstPtr& mavRCIn_clbc); //subscriber mavros/rc/in
 		void mavStateCallback(const mavros_msgs::State::ConstPtr& mavState_clbc); //subscriber mavros/state
 		//access member functions
-		void mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clbc); //subscriber mavlink/from
+		void mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clbc); //subscriber mavlink/from also decodes mavlink messsages
 		void battStateCallback(const sensor_msgs::BatteryState::ConstPtr& battstate_clbc); //subscriber mavros/battery
 		void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_clbc); //subscriber /scan and /tf
 		std::vector<float> & getTemperature();
@@ -87,7 +89,7 @@ class Listener{
 		std::vector<int> & getCompidMavlink();
 		std::vector<int> & getMsgidMavlink();
 		std::vector<int> & getChecksumMavlink();
-		std::vector<std::vector<long unsigned int> > & getPayloadMavlink();
+		std::vector<std::vector<uint64_t> > & getPayloadMavlink();
 		std::vector<std::string> & getTimeMavlink();
 		std::vector<std::vector<float> > & getCellVoltage();
 		std::vector<float> & getCurrent();
@@ -103,6 +105,12 @@ class Listener{
 		std::vector<std::vector<float> > & getRangesLaser();
 		std::vector<std::vector<float> > & getIntensitiesLaser();
 		std::vector<std::string> & getTimeLaser();
+
+		std::vector<mavlink_battery_status_t> & getBatteryStatusMsgData();
+		std::vector<std::string> & getBatteryStatusTime();
+		std::vector<mavlink_sys_status_t> & getSysStatusMsgData();
+		std::vector<std::string> & getSysStatusTime();
+
 	protected:
 		tf::TransformListener tfLstnr;
 
@@ -144,7 +152,7 @@ class Listener{
 		std::vector<int> compid_mavlink;
 		std::vector<int> msgid_mavlink;
 		std::vector<int> checksum_mavlink;
-		std::vector<std::vector<long unsigned int> > payload_mavlink;
+		std::vector<std::vector<uint64_t> > payload_mavlink;
 		std::vector<std::string> time_mavlink;
 		std::vector<std::vector<float> > cell_voltage;
 		std::vector<float> current;
@@ -159,7 +167,23 @@ class Listener{
 		std::vector<float> range_max_laser;
 		std::vector<std::vector<float> > ranges_laser;
 		std::vector<std::vector<float> > intensities_laser;
+		std::vector<float> offset_x_laser;
+		std::vector<float> offset_y_laser;
+		std::vector<float> offset_z_laser;
+		std::vector<float> attitude_lidar_x_laser;
+		std::vector<float> attitude_lidar_y_laser;
+		std::vector<float> attitude_lidar_z_laser;
+		std::vector<float> attitude_lidar_w_laser;
+		std::vector<float> attitude_odom_x_laser;
+		std::vector<float> attitude_odom_y_laser;
+		std::vector<float> attitude_odom_z_laser;
+		std::vector<float> attitude_odom_w_laser;
 		std::vector<std::string> time_laser;
+
+		std::vector<mavlink_battery_status_t> mavlink_battery_status_msg_data;
+		std::vector<std::string> mavlink_battery_status_time;
+		std::vector<mavlink_sys_status_t> mavlink_sys_status_msg_data;
+		std::vector<std::string> mavlink_sys_status_time;
 };
 
 void Listener::tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc){
@@ -287,7 +311,7 @@ void Listener::mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clb
 	int compid = mavlink_clbc -> compid;
 	int msgid = mavlink_clbc -> msgid;
 	int checksum = mavlink_clbc -> checksum;
-	std::vector<long unsigned int> payload = mavlink_clbc -> payload64;
+	std::vector<uint64_t> payload = mavlink_clbc -> payload64;
 	this -> framing_status_mavlink.push_back(framing_status);
 	this -> magic_mavlink.push_back(magic);
 	this -> len_mavlink.push_back(len);
@@ -306,6 +330,18 @@ void Listener::mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clb
 	ss << secs << "." << nanosecs;
 	std::string time = ss.str();
 	this -> time_mavlink.push_back(time);
+
+	//Start message decoding
+	if (msgid == MAVLINK_MSG_ID_BATTERY_STATUS)
+	{
+		this -> mavlink_battery_status_msg_data.push_back(*(mavlink_battery_status_t*)payload.data());
+		this -> mavlink_battery_status_time.push_back(time);
+	}
+	else if (msgid == MAVLINK_MSG_ID_SYS_STATUS)
+	{
+		this -> mavlink_sys_status_msg_data.push_back(*(mavlink_sys_status_t*)payload.data());
+		this -> mavlink_sys_status_time.push_back(time);
+	}
 }
 
 void Listener::battStateCallback(const sensor_msgs::BatteryState::ConstPtr& battstate_clbc){
@@ -340,6 +376,27 @@ void Listener::laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_clbc)
 	ss << secs << "." << nanosecs;
 	std::string time = ss.str();
 	this -> time_laser.push_back(time);
+
+	tf::StampedTransform tfLIDAR;
+  	try {
+ 		tfLstnr.lookupTransform("/dGPS", "/LIDAR",
+ 			ros::Time(0), tfLIDAR);
+ 		tfLIDAR.getOrigin();
+ 		tfLIDAR.getRotation();
+	}
+	catch (tf::TransformException &ex) {
+		ROS_ERROR("%s",ex.what());
+	}
+
+	tf::StampedTransform tfOdom;
+  	try {
+ 		tfLstnr.lookupTransform("/base_link", "/odom",
+ 			ros::Time(0), tfOdom);
+ 		tfOdom.getRotation();
+	}
+	catch (tf::TransformException &ex) {
+		ROS_ERROR("%s",ex.what());
+	}
 }
 
 std::vector<float> & Listener::getTemperature(){
@@ -483,7 +540,7 @@ std::vector<int> & Listener::getMsgidMavlink(){
 std::vector<int> & Listener::getChecksumMavlink(){
 	return this -> checksum_mavlink;
 }
-std::vector<std::vector<long unsigned int> > & Listener::getPayloadMavlink(){
+std::vector<std::vector<uint64_t> > & Listener::getPayloadMavlink(){
 	return this -> payload_mavlink;
 }
 std::vector<std::string> & Listener::getTimeMavlink(){
@@ -540,6 +597,21 @@ std::vector<std::vector<float> > & Listener::getIntensitiesLaser(){
 
 std::vector<std::string> & Listener::getTimeLaser(){
 	return this -> time_laser;
+}
+
+std::vector<mavlink_battery_status_t> & Listener::getBatteryStatusMsgData(){
+	return this -> mavlink_battery_status_msg_data;
+}
+std::vector<std::string> & Listener::getBatteryStatusTime(){
+	return this -> mavlink_battery_status_time;
+}
+
+
+std::vector<mavlink_sys_status_t> & Listener::getSysStatusMsgData(){
+	return this -> mavlink_sys_status_msg_data;
+}
+std::vector<std::string> & Listener::getSysStatusTime(){
+	return this -> mavlink_sys_status_time;
 }
 
 
@@ -741,6 +813,31 @@ void MavLinkWriter::writer(std::string filename, std::vector<int> framing_status
 
 /*--------------------------------------------------------------------------*/
 
+/*MavLinkWriter class: writes the mavlink data to csv file (includes a header row)*/
+
+class MavLinkBatteryStatusWriter{
+	public:
+		void writer(std::string filename, std::vector<mavlink_battery_status_t> msg_data, int length, std::vector<double> time);
+};
+
+void MavLinkBatteryStatusWriter::writer(std::string filename, std::vector<mavlink_battery_status_t> msg_data, int length, std::vector<double> time){
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "Consumed current [mAh]" << ";" << "Consumed energy [100J]" << ";" << "Temperature [centi-degrees]" << ";" << "Voltage1 [mv]" << ";" << "Voltage2 [mv]" << ";" << "Voltage3 [mv]" << ";" << "Voltage4 [mv]" << ";" << "Voltage5 [mv]" << ";" << "Voltage6 [mv]" << ";" << "Voltage7 [mv]" << ";" << "Voltage8 [mv]" << ";" << "Voltage9 [mv]" << ";" << "Voltage10 [mv]" << ";" << "Battery current [10mA]" << ";" << "Battery ID" << ";" << "Battery Function" << ";" << "Chemistry" << ";" << "Remaining [percent]" << std::endl;
+	for (int i = 0; i < length; i++){
+		file << time[i] << ";" << msg_data[i].current_consumed << ";" << msg_data[i].energy_consumed << ";" << msg_data[i].temperature << ";";
+		for (int j = 0; j < 10; j++){
+			file << msg_data[i].voltages[j] << ";";
+		}
+		file << msg_data[i].current_battery << ";" << msg_data[i].id << ";" << msg_data[i].battery_function << ";" << msg_data[i].battery_function << ";" << msg_data[i].type << ";" << msg_data[i].battery_remaining << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
 /*BattStateWriter class: writes the battery and solar panel data to csv file (includes a header row)*/
 
 class BattStateWriter{
@@ -912,6 +1009,7 @@ int main(int argc, char **argv){
 	RCInWriter rcinwrtr;
 	MavStateWriter stwrtr;
 	MavLinkWriter mvlnkwrtr;
+	MavLinkBatteryStatusWriter mvlnkbttrywrtr;
 	BattStateWriter bttstwrtr;
 	LaserWriter lsrwrtr;
 
@@ -981,6 +1079,11 @@ int main(int argc, char **argv){
 	std::vector<std::vector<long unsigned int> > payload_mavlink = lstnr.getPayloadMavlink();
 	int length_mavlink = framing_status_mavlink.size();
 	std::vector<std::string> time_mavlink = lstnr.getTimeMavlink();
+
+	std::vector<mavlink_battery_status_t> mavlink_battery_status_msg_data = lstnr.getBatteryStatusMsgData();
+	std::vector<std::string> mavlink_battery_status_time = lstnr.getBatteryStatusTime();
+	int length_mavlink_battery_status = mavlink_battery_status_time.size();
+
 	std::vector<std::vector<float> > cell_voltage = lstnr.getCellVoltage();
 	std::vector<float> current = lstnr.getCurrent();
 	int length_battstate = current.size();
@@ -1023,6 +1126,11 @@ int main(int argc, char **argv){
 	std::vector<double> time_mavlink_double = clndata.convertTimeToDouble(time_mavlink);
 	mvlnkwrtr.writer(filename_mavlink, framing_status_mavlink, magic_mavlink, len_mavlink, incompat_flags_mavlink, compat_flags_mavlink, seq_mavlink, sysid_mavlink, compid_mavlink, msgid_mavlink, checksum_mavlink, payload_mavlink, length_mavlink, time_mavlink_double);
 	
+	std::string filename_mavlink_battery_status = "mavlinkbatterystatusdata";
+	std::vector<double> time_mavlink_battery_status_double = clndata.convertTimeToDouble(mavlink_battery_status_time);
+	mvlnkbttrywrtr.writer(filename_mavlink_battery_status, mavlink_battery_status_msg_data, length_mavlink_battery_status, time_mavlink_battery_status_double);
+
+
 	std::string filename_batterystatus = "batterydata";
 	std::vector<double> time_battstate_double = clndata.convertTimeToDouble(time_battstate);
 	bttstwrtr.writer(filename_batterystatus, cell_voltage, current, length_battstate, time_battstate_double);
