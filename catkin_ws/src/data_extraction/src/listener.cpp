@@ -832,7 +832,7 @@ void MavLinkBatteryStatusWriter::writer(std::string filename, std::vector<mavlin
 		for (int j = 0; j < 10; j++){
 			file << msg_data[i].voltages[j] << ";";
 		}
-		file << msg_data[i].current_battery << ";" << msg_data[i].id << ";" << msg_data[i].battery_function << ";" << msg_data[i].battery_function << ";" << msg_data[i].type << ";" << msg_data[i].battery_remaining << std::endl;
+		file << msg_data[i].current_battery << ";" << +msg_data[i].id << ";" << +msg_data[i].battery_function << ";" << +msg_data[i].type << ";" << +msg_data[i].battery_remaining << std::endl;
 	}
 }
 
