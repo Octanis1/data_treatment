@@ -813,7 +813,7 @@ void MavLinkWriter::writer(std::string filename, std::vector<int> framing_status
 
 /*--------------------------------------------------------------------------*/
 
-/*MavLinkWriter class: writes the mavlink data to csv file (includes a header row)*/
+/*MavLinkBatteryStatusWriter class: writes the mavlink battery status data to csv file (includes a header row)*/
 
 class MavLinkBatteryStatusWriter{
 	public:
@@ -826,13 +826,34 @@ void MavLinkBatteryStatusWriter::writer(std::string filename, std::vector<mavlin
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Time" << ";" << "Consumed current [mAh]" << ";" << "Consumed energy [100J]" << ";" << "Temperature [centi-degrees]" << ";" << "Voltage1 [mv]" << ";" << "Voltage2 [mv]" << ";" << "Voltage3 [mv]" << ";" << "Voltage4 [mv]" << ";" << "Voltage5 [mv]" << ";" << "Voltage6 [mv]" << ";" << "Voltage7 [mv]" << ";" << "Voltage8 [mv]" << ";" << "Voltage9 [mv]" << ";" << "Voltage10 [mv]" << ";" << "Battery current [10mA]" << ";" << "Battery ID" << ";" << "Battery Function" << ";" << "Chemistry" << ";" << "Remaining [percent]" << std::endl;
+	file << "Time" << ";" << "Consumed current [mAh]" << ";" << "Consumed energy [100J]" << ";" << "Temperature [centi-degrees]" << ";" << "Voltage1 [mV]" << ";" << "Voltage2 [mV]" << ";" << "Voltage3 [mV]" << ";" << "Voltage4 [mV]" << ";" << "Voltage5 [mV]" << ";" << "Voltage6 [mV]" << ";" << "Voltage7 [mV]" << ";" << "Voltage8 [mV]" << ";" << "Voltage9 [mV]" << ";" << "Voltage10 [mV]" << ";" << "Battery current [10mA]" << ";" << "Battery ID" << ";" << "Battery Function" << ";" << "Chemistry" << ";" << "Remaining [percent]" << std::endl;
 	for (int i = 0; i < length; i++){
 		file << time[i] << ";" << msg_data[i].current_consumed << ";" << msg_data[i].energy_consumed << ";" << msg_data[i].temperature << ";";
 		for (int j = 0; j < 10; j++){
 			file << msg_data[i].voltages[j] << ";";
 		}
 		file << msg_data[i].current_battery << ";" << +msg_data[i].id << ";" << +msg_data[i].battery_function << ";" << +msg_data[i].type << ";" << +msg_data[i].battery_remaining << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
+/*MavLinkSysStatusWriter class: writes the mavlink system status data to csv file (includes a header row)*/
+
+class MavLinkSysStatusWriter{
+	public:
+		void writer(std::string filename, std::vector<mavlink_sys_status_t> msg_data, int length, std::vector<double> time);
+};
+
+void MavLinkSysStatusWriter::writer(std::string filename, std::vector<mavlink_sys_status_t> msg_data, int length, std::vector<double> time){
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "Sensor present bitmask" << ";" << "Sensor enabled bitmask" << ";" << "Sensor health bitmask" << ";" << "load [per mill mainloop time]" << ";" << "Battery voltage [mV]" << ";" << "Battery current [10 mA]" << ";" << "Communication drop rate [0.01 percent]" << ";" << "Communication errors" << ";" << "errors_count1" << ";" << "errors_count2" << ";" << "errors_count3" << ";" << "errors_count4" << ";" << "battery remaining [percent]" << std::endl;
+	for (int i = 0; i < length; i++){
+		file << time[i] << ";" << msg_data[i].onboard_control_sensors_present << ";" << msg_data[i].onboard_control_sensors_enabled << ";" << msg_data[i].onboard_control_sensors_health << ";" << msg_data[i].load << ";" << msg_data[i].voltage_battery << ";" << msg_data[i].current_battery << ";" << msg_data[i].drop_rate_comm << ";" << msg_data[i].errors_comm << ";" << msg_data[i].errors_count1 << ";" << msg_data[i].errors_count2 << ";" << +msg_data[i].errors_count3 << ";" << +msg_data[i].errors_count4 << ";" << +msg_data[i].battery_remaining << std::endl;
 	}
 }
 
@@ -1010,6 +1031,7 @@ int main(int argc, char **argv){
 	MavStateWriter stwrtr;
 	MavLinkWriter mvlnkwrtr;
 	MavLinkBatteryStatusWriter mvlnkbttrywrtr;
+	MavLinkSysStatusWriter mvlnksyswrtr;
 	BattStateWriter bttstwrtr;
 	LaserWriter lsrwrtr;
 
@@ -1084,6 +1106,10 @@ int main(int argc, char **argv){
 	std::vector<std::string> mavlink_battery_status_time = lstnr.getBatteryStatusTime();
 	int length_mavlink_battery_status = mavlink_battery_status_time.size();
 
+	std::vector<mavlink_sys_status_t> mavlink_sys_status_msg_data = lstnr.getSysStatusMsgData();
+	std::vector<std::string> mavlink_sys_status_time = lstnr.getSysStatusTime();
+	int length_mavlink_sys_status = mavlink_sys_status_time.size();
+
 	std::vector<std::vector<float> > cell_voltage = lstnr.getCellVoltage();
 	std::vector<float> current = lstnr.getCurrent();
 	int length_battstate = current.size();
@@ -1130,6 +1156,9 @@ int main(int argc, char **argv){
 	std::vector<double> time_mavlink_battery_status_double = clndata.convertTimeToDouble(mavlink_battery_status_time);
 	mvlnkbttrywrtr.writer(filename_mavlink_battery_status, mavlink_battery_status_msg_data, length_mavlink_battery_status, time_mavlink_battery_status_double);
 
+	std::string filename_mavlink_sys_status = "mavlinksysstatusdata";
+	std::vector<double> time_mavlink_sys_status_double = clndata.convertTimeToDouble(mavlink_sys_status_time);
+	mvlnksyswrtr.writer(filename_mavlink_sys_status, mavlink_sys_status_msg_data, length_mavlink_sys_status, time_mavlink_sys_status_double);
 
 	std::string filename_batterystatus = "batterydata";
 	std::vector<double> time_battstate_double = clndata.convertTimeToDouble(time_battstate);
