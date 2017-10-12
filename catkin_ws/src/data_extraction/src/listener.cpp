@@ -104,6 +104,9 @@ class Listener{
 		std::vector<float> & getRangeMaxLaser();
 		std::vector<std::vector<float> > & getRangesLaser();
 		std::vector<std::vector<float> > & getIntensitiesLaser();
+		std::vector<tf::Vector3> & getOffsetLaser();
+		std::vector<tf::Quaternion> & getRotationLidarLaser();
+		std::vector<tf::Quaternion> & getRotationOdomLaser();
 		std::vector<std::string> & getTimeLaser();
 
 		std::vector<mavlink_battery_status_t> & getBatteryStatusMsgData();
@@ -167,17 +170,9 @@ class Listener{
 		std::vector<float> range_max_laser;
 		std::vector<std::vector<float> > ranges_laser;
 		std::vector<std::vector<float> > intensities_laser;
-		std::vector<float> offset_x_laser;
-		std::vector<float> offset_y_laser;
-		std::vector<float> offset_z_laser;
-		std::vector<float> attitude_lidar_x_laser;
-		std::vector<float> attitude_lidar_y_laser;
-		std::vector<float> attitude_lidar_z_laser;
-		std::vector<float> attitude_lidar_w_laser;
-		std::vector<float> attitude_odom_x_laser;
-		std::vector<float> attitude_odom_y_laser;
-		std::vector<float> attitude_odom_z_laser;
-		std::vector<float> attitude_odom_w_laser;
+		std::vector<tf::Vector3> offset_laser;
+		std::vector<tf::Quaternion> rotation_lidar_laser;
+		std::vector<tf::Quaternion> rotation_odom_laser;
 		std::vector<std::string> time_laser;
 
 		std::vector<mavlink_battery_status_t> mavlink_battery_status_msg_data;
@@ -381,21 +376,24 @@ void Listener::laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_clbc)
   	try {
  		tfLstnr.lookupTransform("/dGPS", "/LIDAR",
  			ros::Time(0), tfLIDAR);
- 		tfLIDAR.getOrigin();
- 		tfLIDAR.getRotation();
+ 		this -> offset_laser.push_back(tfLIDAR.getOrigin());
+ 		this -> rotation_lidar_laser.push_back(tfLIDAR.getRotation());
 	}
 	catch (tf::TransformException &ex) {
 		ROS_ERROR("%s",ex.what());
+		this -> offset_laser.push_back(tf::Vector3(0,0,0));
+		this -> rotation_lidar_laser.push_back(tf::Quaternion(0,0,0,0));
 	}
 
 	tf::StampedTransform tfOdom;
   	try {
  		tfLstnr.lookupTransform("/base_link", "/odom",
  			ros::Time(0), tfOdom);
- 		tfOdom.getRotation();
+ 		this -> rotation_odom_laser.push_back(tfOdom.getRotation());
 	}
 	catch (tf::TransformException &ex) {
 		ROS_ERROR("%s",ex.what());
+		this -> rotation_odom_laser.push_back(tf::Quaternion(0,0,0,0));
 	}
 }
 
@@ -593,6 +591,18 @@ std::vector<std::vector<float> > & Listener::getRangesLaser(){
 
 std::vector<std::vector<float> > & Listener::getIntensitiesLaser(){
 	return this -> intensities_laser;
+}
+
+std::vector<tf::Vector3> & Listener::getOffsetLaser(){
+	return this -> offset_laser;
+}
+
+std::vector<tf::Quaternion> & Listener::getRotationLidarLaser(){
+	return this -> rotation_lidar_laser;
+}
+
+std::vector<tf::Quaternion> & Listener::getRotationOdomLaser(){
+	return this -> rotation_odom_laser;
 }
 
 std::vector<std::string> & Listener::getTimeLaser(){
@@ -884,16 +894,16 @@ void BattStateWriter::writer(std::string filename, std::vector<std::vector<float
 
 class LaserWriter{
 	public:
-		void writer(std::string filename, std::vector<float> angle_min, std::vector<float> angle_max, std::vector<float> angle_increment, std::vector<float> time_increment, std::vector<float> scan_time, std::vector<float> range_min, std::vector<float> range_max, std::vector<std::vector<float> > ranges, std::vector<std::vector<float> > intensities, int length, std::vector<double> time);
+		void writer(std::string filename, std::vector<float> angle_min, std::vector<float> angle_max, std::vector<float> angle_increment, std::vector<float> time_increment, std::vector<float> scan_time, std::vector<float> range_min, std::vector<float> range_max, std::vector<std::vector<float> > ranges, std::vector<std::vector<float> > intensities, std::vector<tf::Vector3> offset, std::vector<tf::Quaternion> rotation_lidar, std::vector<tf::Quaternion> rotation_odom, int length, std::vector<double> time);
 };
 
-void LaserWriter::writer(std::string filename, std::vector<float> angle_min, std::vector<float> angle_max, std::vector<float> angle_increment, std::vector<float> time_increment, std::vector<float> scan_time, std::vector<float> range_min, std::vector<float> range_max, std::vector<std::vector<float> > ranges, std::vector<std::vector<float> > intensities, int length, std::vector<double> time){
+void LaserWriter::writer(std::string filename, std::vector<float> angle_min, std::vector<float> angle_max, std::vector<float> angle_increment, std::vector<float> time_increment, std::vector<float> scan_time, std::vector<float> range_min, std::vector<float> range_max, std::vector<std::vector<float> > ranges, std::vector<std::vector<float> > intensities, std::vector<tf::Vector3> offset, std::vector<tf::Quaternion> rotation_lidar, std::vector<tf::Quaternion> rotation_odom, int length, std::vector<double> time){
 	std::ofstream file(filename.c_str());
 	if (file.is_open() == false){
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Time" << ";" << "start angle of the scan [rad]" << ";" << "end angle of the scan [rad]" << ";" << "angular distance between measurements [rad]" << ";" << "time between measurements [seconds]" << ";" << "minimum range value [m]" << ";" << "maximum range value [m]" << ";" << "range data [m]" << ";" << "intensity data [device-specific units]" << std::endl;
+	file << "Time" << ";" << "offset LIDAR dGPS X" << ";" << "offset LIDAR dGPS Y" << ";" << "offset LIDAR dGPS Z" << ";" << "rotation LIDAR X" << ";" << "rotation LIDAR Y" << ";" << "rotation LIDAR Z" << ";" << "rotation LIDAR W" << ";" << "rotation odom X" << ";" << "rotation odom Y" << ";" << "rotation odom Z" << ";" << "rotation odom W" << ";" << "start angle of the scan [rad]" << ";" << "end angle of the scan [rad]" << ";" << "angular distance between measurements [rad]" << ";" << "time between measurements [seconds]" << ";" << "minimum range value [m]" << ";" << "maximum range value [m]" << ";" << "range data [m]" << ";" << "intensity data [device-specific units]" << std::endl;
 
 	for (int i = 0; i < length; i++){
 
@@ -909,8 +919,9 @@ void LaserWriter::writer(std::string filename, std::vector<float> angle_min, std
 		std::string s_intensities = ss_intensities.str();
 		s_intensities = s_intensities.substr(0, s_intensities.length()-1);
 
-		file << time[i] << ";" << angle_min[i] << ";" << angle_max[i] << ";" << angle_increment[i] << ";" << time_increment[i] << ";" << scan_time[i] << ";" << range_min[i] << ";" << range_max[i] << ";" << angle_increment[i] << ";" << s_ranges << ";" << s_intensities << std::endl;
+		file << time[i] << ";" << offset[i].getX() << ";" << offset[i].getY() << ";" << offset[i].getZ() << ";" << rotation_lidar[i].x() << ";" << rotation_lidar[i].y() << ";" << rotation_lidar[i].z() << ";" << rotation_lidar[i].w() << ";" << rotation_odom[i].x() << ";" << rotation_odom[i].y() << ";" << rotation_odom[i].z() << ";" << rotation_odom[i].w() << ";" << angle_min[i] << ";" << angle_max[i] << ";" << angle_increment[i] << ";" << time_increment[i] << ";" << scan_time[i] << ";" << range_min[i] << ";" << range_max[i] << ";" << angle_increment[i] << ";" << s_ranges << ";" << s_intensities << std::endl;
 	}
+	//std::cout << "length laser data: " << length << "; length offset data: " << offset.size() << "; length rotation lidar data: " << rotation_lidar.size() << "; length rotation odom data: " << rotation_odom.size() << std::endl;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1124,6 +1135,9 @@ int main(int argc, char **argv){
 	std::vector<float> range_max_laser = lstnr.getRangeMaxLaser();
 	std::vector<std::vector<float> > ranges_laser = lstnr.getRangesLaser();
 	std::vector<std::vector<float> > intensities_laser = lstnr.getIntensitiesLaser();
+	std::vector<tf::Vector3> offset_laser = lstnr.getOffsetLaser();
+	std::vector<tf::Quaternion> rotation_lidar_laser = lstnr.getRotationLidarLaser();
+	std::vector<tf::Quaternion> rotation_odom_laser = lstnr.getRotationOdomLaser();
 	int length_laser = angle_min_laser.size();
 	std::vector<std::string> time_laser = lstnr.getTimeLaser();
 
@@ -1166,7 +1180,7 @@ int main(int argc, char **argv){
 
 	std::string filename_laser = "laserdata";
 	std::vector<double> time_laser_double = clndata.convertTimeToDouble(time_laser);
-	lsrwrtr.writer(filename_laser, angle_min_laser, angle_max_laser, angle_increment_laser, time_increment_laser, scan_time_laser, range_min_laser, range_max_laser, ranges_laser, intensities_laser, length_laser, time_laser_double);
+	lsrwrtr.writer(filename_laser, angle_min_laser, angle_max_laser, angle_increment_laser, time_increment_laser, scan_time_laser, range_min_laser, range_max_laser, ranges_laser, intensities_laser, offset_laser, rotation_lidar_laser, rotation_odom_laser, length_laser, time_laser_double);
 
 //write data averaged to the nearest second by taking the median to file
 	std::string filename_median_temp = "tempdata_median";
