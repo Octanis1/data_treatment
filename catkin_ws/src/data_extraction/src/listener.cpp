@@ -12,6 +12,8 @@ Identify the name of the .h file by executing 'rostopic type <topic>'*/
 #include "mavros_msgs/Mavlink.h"
 #include "sensor_msgs/BatteryState.h"
 #include "sensor_msgs/LaserScan.h"
+#include "nav_msgs/Odometry.h"
+#include "geometry_msgs/PoseWithCovariance.h"
 //#include "geometry_msgs/TransformStamped.h"
 //#include "geometry_msgs/Transform.h"
 //#include "geometry_msgs/Vector3.h"
@@ -43,6 +45,7 @@ class Listener{
 		void tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc); //subscriber imu/temp
 		void imuCallback(const sensor_msgs::Imu::ConstPtr& imu_clbc); //subscriber imu/raw
 		void mavrosAtmPressureCallback(const sensor_msgs::FluidPressure::ConstPtr& mavros_atm_pres_clbc); //subscriber mavros/atm_pressure
+		void mavrosGPSLocalCallback(const nav_msgs::Odometry::ConstPtr& mavros_gps_local_clbc); //subscriber mavros/global_position/local
 		void mavTempCallback(const sensor_msgs::Temperature::ConstPtr& mavtmp_clbc); //subscriber mavros/imu/temp
 		//void missionWaypointCallback(const mavros_msgs::WaypointList::ConstPtr& waypntlst_clbc); //subscriber mavros/mission/waypoints NOTE: SEQUENCE NR NOT AVAILABLE
 		void mavRCInCallback(const mavros_msgs::RCIn::ConstPtr& mavRCIn_clbc); //subscriber mavros/rc/in
@@ -109,10 +112,19 @@ class Listener{
 		std::vector<tf::Quaternion> & getRotationOdomLaser();
 		std::vector<std::string> & getTimeLaser();
 
+		std::vector<geometry_msgs::PoseWithCovariance> & getPoseGPSLocal();
+		std::vector<std::string> & getTimeGPSLocal();
+
 		std::vector<mavlink_battery_status_t> & getBatteryStatusMsgData();
 		std::vector<std::string> & getBatteryStatusTime();
 		std::vector<mavlink_sys_status_t> & getSysStatusMsgData();
 		std::vector<std::string> & getSysStatusTime();
+		std::vector<mavlink_gps_raw_int_t> & getGPSRawIntMsgData();
+		std::vector<std::string> & getGPSRawIntTime();
+		std::vector<mavlink_global_position_int_t> & getGlobalPositionIntMsgData();
+		std::vector<std::string> & getGlobalPositionIntTime();
+		std::vector<mavlink_scaled_pressure_t> & getScaledPressureMsgData();
+		std::vector<std::string> & getScaledPressureTime();
 
 	protected:
 		tf::TransformListener tfLstnr;
@@ -175,10 +187,20 @@ class Listener{
 		std::vector<tf::Quaternion> rotation_odom_laser;
 		std::vector<std::string> time_laser;
 
+		std::vector<geometry_msgs::PoseWithCovariance> pose_gps_local;
+		std::vector<std::string> time_gps_local;
+
 		std::vector<mavlink_battery_status_t> mavlink_battery_status_msg_data;
 		std::vector<std::string> mavlink_battery_status_time;
 		std::vector<mavlink_sys_status_t> mavlink_sys_status_msg_data;
 		std::vector<std::string> mavlink_sys_status_time;
+		std::vector<mavlink_gps_raw_int_t> mavlink_gps_raw_int_msg_data;
+		std::vector<std::string> mavlink_gps_raw_int_time;
+		std::vector<mavlink_global_position_int_t> mavlink_global_position_int_msg_data;
+		std::vector<std::string> mavlink_global_position_int_time;
+		std::vector<mavlink_scaled_pressure_t> mavlink_scaled_pressure_msg_data;
+		std::vector<std::string> mavlink_scaled_pressure_time;
+
 };
 
 void Listener::tempCallback(const sensor_msgs::Temperature::ConstPtr& tmp_clbc){
@@ -233,6 +255,17 @@ void Listener::mavrosAtmPressureCallback(const sensor_msgs::FluidPressure::Const
 	ss << secs << "." << nanosecs;
 	std::string time = ss.str();
 	this -> time_press.push_back(time);
+}
+
+void Listener::mavrosGPSLocalCallback(const nav_msgs::Odometry::ConstPtr& mavros_gps_local_clbc){
+	this -> pose_gps_local.push_back(mavros_gps_local_clbc -> pose);
+	std_msgs::Header hdr = mavros_gps_local_clbc -> header;
+	int secs = hdr.stamp.sec;
+	int nanosecs = hdr.stamp.nsec;
+	std::stringstream ss;
+	ss << secs << "." << nanosecs;
+	std::string time = ss.str();
+	this -> time_gps_local.push_back(time);
 }
 
 void Listener::mavTempCallback(const sensor_msgs::Temperature::ConstPtr& mavtmp_clbc){
@@ -337,6 +370,21 @@ void Listener::mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clb
 		this -> mavlink_sys_status_msg_data.push_back(*(mavlink_sys_status_t*)payload.data());
 		this -> mavlink_sys_status_time.push_back(time);
 	}
+	else if (msgid == MAVLINK_MSG_ID_GPS_RAW_INT)
+	{
+		this -> mavlink_gps_raw_int_msg_data.push_back(*(mavlink_gps_raw_int_t*)payload.data());
+		this -> mavlink_gps_raw_int_time.push_back(time);
+	}
+	else if (msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT)
+	{
+		this -> mavlink_global_position_int_msg_data.push_back(*(mavlink_global_position_int_t*)payload.data());
+		this -> mavlink_global_position_int_time.push_back(time);
+	}
+	else if (msgid == MAVLINK_MSG_ID_SCALED_PRESSURE)
+	{
+		this -> mavlink_scaled_pressure_msg_data.push_back(*(mavlink_scaled_pressure_t*)payload.data());
+		this -> mavlink_scaled_pressure_time.push_back(time);
+	}
 }
 
 void Listener::battStateCallback(const sensor_msgs::BatteryState::ConstPtr& battstate_clbc){
@@ -397,233 +445,123 @@ void Listener::laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_clbc)
 	}
 }
 
-std::vector<float> & Listener::getTemperature(){
-	return this -> temp;
-}
+std::vector<float> & Listener::getTemperature(){return this -> temp;}
 
-std::vector<std::string> & Listener::getTimeTemp(){
-	return this -> time_temp;
-}
+std::vector<std::string> & Listener::getTimeTemp(){return this -> time_temp;}
 
-std::vector<float> & Listener::getAngularVelocityX(){
-	return this -> angular_vel_x;
-}
+std::vector<float> & Listener::getAngularVelocityX(){return this -> angular_vel_x;}
 
-std::vector<float> & Listener::getAngularVelocityY(){
-	return this -> angular_vel_y;
-}
+std::vector<float> & Listener::getAngularVelocityY(){return this -> angular_vel_y;}
 
-std::vector<float> & Listener::getAngularVelocityZ(){
-	return this -> angular_vel_z;
-}
+std::vector<float> & Listener::getAngularVelocityZ(){return this -> angular_vel_z;}
 
-std::vector<float> & Listener::getOrientationX(){
-	return this -> orientation_x;
-}
+std::vector<float> & Listener::getOrientationX(){return this -> orientation_x;}
 
-std::vector<float> & Listener::getOrientationY(){
-	return this -> orientation_y;
-}
+std::vector<float> & Listener::getOrientationY(){return this -> orientation_y;}
 
-std::vector<float> & Listener::getOrientationZ(){
-	return this -> orientation_z;
-}
+std::vector<float> & Listener::getOrientationZ(){return this -> orientation_z;}
 
-std::vector<float> & Listener::getOrientationW(){
-	return this -> orientation_w;
-}
+std::vector<float> & Listener::getOrientationW(){return this -> orientation_w;}
 
-std::vector<float> & Listener::getLinearAccelerationX(){
-	return this -> linear_acc_x;
-}
+std::vector<float> & Listener::getLinearAccelerationX(){return this -> linear_acc_x;}
 
-std::vector<float> & Listener::getLinearAccelerationY(){
-	return this -> linear_acc_y;
-}
+std::vector<float> & Listener::getLinearAccelerationY(){return this -> linear_acc_y;}
 
-std::vector<float> & Listener::getLinearAccelerationZ(){
-	return this -> linear_acc_z;
-}
+std::vector<float> & Listener::getLinearAccelerationZ(){return this -> linear_acc_z;}
 
-std::vector<std::string> & Listener::getTimeImu(){
-	return this -> time_imu;
-}
+std::vector<std::string> & Listener::getTimeImu(){return this -> time_imu;}
 
-std::vector<float> & Listener::getPressure(){
-	return this -> pressure;
-}
+std::vector<float> & Listener::getPressure(){return this -> pressure;}
 
-std::vector<std::string> & Listener::getTimePress(){
-	return this -> time_press;
-}
+std::vector<std::string> & Listener::getTimePress(){return this -> time_press;}
 
-std::vector<float> & Listener::getMavTemperature(){
-	return this -> mav_temp;
-}
+std::vector<float> & Listener::getMavTemperature(){return this -> mav_temp;}
 
-std::vector<std::string> & Listener::getTimeMavTemp(){
-	return this -> time_mav_temp;
-}
+std::vector<std::string> & Listener::getTimeMavTemp(){return this -> time_mav_temp;}
 
-/*std::vector<float> & Listener::getXLat(){
-	return this -> x_lat;
-}
+/*std::vector<float> & Listener::getXLat(){return this -> x_lat;}
 
-std::vector<float> & Listener::getYLong(){
-	return this -> y_long;
-}
+std::vector<float> & Listener::getYLong(){return this -> y_long;}
 
-std::vector<float> & Listener::getZAlt(){
-	return this -> z_alt;
-}*/
+std::vector<float> & Listener::getZAlt(){return this -> z_alt;}*/
 
-std::vector<int> & Listener::getMavRCRSSI(){
-	return this -> rssi;
-}
+std::vector<int> & Listener::getMavRCRSSI(){return this -> rssi;}
 
-std::vector<std::vector<short unsigned int> > & Listener::getChannels(){
-	return this -> channels;
-}
+std::vector<std::vector<short unsigned int> > & Listener::getChannels(){return this -> channels;}
 
-std::vector<std::string> & Listener::getTimeRCIn(){
-	return this -> time_rc_in;
-}
+std::vector<std::string> & Listener::getTimeRCIn(){return this -> time_rc_in;}
 
-std::vector<bool> & Listener::getConnected(){
-	return this -> connected;
-}
+std::vector<bool> & Listener::getConnected(){return this -> connected;}
 
-std::vector<bool> & Listener::getArmed(){
-	return this -> armed;
-}
+std::vector<bool> & Listener::getArmed(){return this -> armed;}
 
-std::vector<bool> & Listener::getGuided(){
-	return this -> guided;
-}
+std::vector<bool> & Listener::getGuided(){return this -> guided;}
 
-std::vector<std::string> & Listener::getMode(){
-	return this -> mode;
-}
-std::vector<std::string> & Listener::getTimeState(){
-	return this -> time_state;
-}
+std::vector<std::string> & Listener::getMode(){return this -> mode;}
+std::vector<std::string> & Listener::getTimeState(){return this -> time_state;}
 
-std::vector<int> & Listener::getFramingStatusMavlink(){
-	return this -> framing_status_mavlink;
-}
-std::vector<int> & Listener::getMagicMavlink(){
-	return this -> magic_mavlink;
-}
-std::vector<int> & Listener::getLenMavlink(){
-	return this -> len_mavlink;
-}
-std::vector<int> & Listener::getIncompatFlagsMavlink(){
-	return this -> incompat_flags_mavlink;
-}
-std::vector<int> & Listener::getCompatFlagsMavlink(){
-	return this -> compat_flags_mavlink;
-}
-std::vector<int> & Listener::getSeqMavlink(){
-	return this -> seq_mavlink;
-}
-std::vector<int> & Listener::getSysidMavlink(){
-	return this -> sysid_mavlink;
-}
-std::vector<int> & Listener::getCompidMavlink(){
-	return this -> compid_mavlink;
-}
-std::vector<int> & Listener::getMsgidMavlink(){
-	return this -> msgid_mavlink;
-}
-std::vector<int> & Listener::getChecksumMavlink(){
-	return this -> checksum_mavlink;
-}
-std::vector<std::vector<uint64_t> > & Listener::getPayloadMavlink(){
-	return this -> payload_mavlink;
-}
-std::vector<std::string> & Listener::getTimeMavlink(){
-	return this -> time_mavlink;
-}
+std::vector<int> & Listener::getFramingStatusMavlink(){return this -> framing_status_mavlink;}
+std::vector<int> & Listener::getMagicMavlink(){return this -> magic_mavlink;}
+std::vector<int> & Listener::getLenMavlink(){return this -> len_mavlink;}
+std::vector<int> & Listener::getIncompatFlagsMavlink(){return this -> incompat_flags_mavlink;}
+std::vector<int> & Listener::getCompatFlagsMavlink(){return this -> compat_flags_mavlink;}
+std::vector<int> & Listener::getSeqMavlink(){return this -> seq_mavlink;}
+std::vector<int> & Listener::getSysidMavlink(){return this -> sysid_mavlink;}
+std::vector<int> & Listener::getCompidMavlink(){return this -> compid_mavlink;}
+std::vector<int> & Listener::getMsgidMavlink(){return this -> msgid_mavlink;}
+std::vector<int> & Listener::getChecksumMavlink(){return this -> checksum_mavlink;}
+std::vector<std::vector<uint64_t> > & Listener::getPayloadMavlink(){return this -> payload_mavlink;}
+std::vector<std::string> & Listener::getTimeMavlink(){return this -> time_mavlink;}
 
-std::vector<std::vector<float> > & Listener::getCellVoltage(){
-	return this -> cell_voltage;
-}
+std::vector<std::vector<float> > & Listener::getCellVoltage(){return this -> cell_voltage;}
 
-std::vector<float> & Listener::getCurrent(){
-	return this -> current;
-}
+std::vector<float> & Listener::getCurrent(){return this -> current;}
 
-std::vector<std::string> & Listener::getTimeBatteryState(){
-	return this -> time_battstate;
-}
+std::vector<std::string> & Listener::getTimeBatteryState(){return this -> time_battstate;}
 
-std::vector<float> & Listener::getAngleMinLaser(){
-	return this -> angle_min_laser;
-}
+std::vector<float> & Listener::getAngleMinLaser(){return this -> angle_min_laser;}
 
-std::vector<float> & Listener::getAngleMaxLaser(){
-	return this -> angle_max_laser;
-}
+std::vector<float> & Listener::getAngleMaxLaser(){return this -> angle_max_laser;}
 
-std::vector<float> & Listener::getAngleIncrementLaser(){
-	return this -> angle_increment_laser;
-}
+std::vector<float> & Listener::getAngleIncrementLaser(){return this -> angle_increment_laser;}
 
-std::vector<float> & Listener::getTimeIncrementLaser(){
-	return this -> time_increment_laser;
-}
+std::vector<float> & Listener::getTimeIncrementLaser(){return this -> time_increment_laser;}
 
-std::vector<float> & Listener::getScanTimeLaser(){
-	return this -> scan_time_laser;
-}
+std::vector<float> & Listener::getScanTimeLaser(){return this -> scan_time_laser;}
 
-std::vector<float> & Listener::getRangeMinLaser(){
-	return this -> range_min_laser;
-}
+std::vector<float> & Listener::getRangeMinLaser(){return this -> range_min_laser;}
 
-std::vector<float> & Listener::getRangeMaxLaser(){
-	return this -> range_max_laser;
-}
+std::vector<float> & Listener::getRangeMaxLaser(){return this -> range_max_laser;}
 
-std::vector<std::vector<float> > & Listener::getRangesLaser(){
-	return this -> ranges_laser;
-}
+std::vector<std::vector<float> > & Listener::getRangesLaser(){return this -> ranges_laser;}
 
-std::vector<std::vector<float> > & Listener::getIntensitiesLaser(){
-	return this -> intensities_laser;
-}
+std::vector<std::vector<float> > & Listener::getIntensitiesLaser(){return this -> intensities_laser;}
 
-std::vector<tf::Vector3> & Listener::getOffsetLaser(){
-	return this -> offset_laser;
-}
+std::vector<tf::Vector3> & Listener::getOffsetLaser(){return this -> offset_laser;}
 
-std::vector<tf::Quaternion> & Listener::getRotationLidarLaser(){
-	return this -> rotation_lidar_laser;
-}
+std::vector<tf::Quaternion> & Listener::getRotationLidarLaser(){return this -> rotation_lidar_laser;}
 
-std::vector<tf::Quaternion> & Listener::getRotationOdomLaser(){
-	return this -> rotation_odom_laser;
-}
+std::vector<tf::Quaternion> & Listener::getRotationOdomLaser(){return this -> rotation_odom_laser;}
 
-std::vector<std::string> & Listener::getTimeLaser(){
-	return this -> time_laser;
-}
+std::vector<std::string> & Listener::getTimeLaser(){return this -> time_laser;}
 
-std::vector<mavlink_battery_status_t> & Listener::getBatteryStatusMsgData(){
-	return this -> mavlink_battery_status_msg_data;
-}
-std::vector<std::string> & Listener::getBatteryStatusTime(){
-	return this -> mavlink_battery_status_time;
-}
+std::vector<geometry_msgs::PoseWithCovariance> & Listener::getPoseGPSLocal(){return this -> pose_gps_local;}
+std::vector<std::string> & Listener::getTimeGPSLocal(){return this -> time_gps_local;}
 
+std::vector<mavlink_battery_status_t> & Listener::getBatteryStatusMsgData(){return this -> mavlink_battery_status_msg_data;}
+std::vector<std::string> & Listener::getBatteryStatusTime(){return this -> mavlink_battery_status_time;}
 
-std::vector<mavlink_sys_status_t> & Listener::getSysStatusMsgData(){
-	return this -> mavlink_sys_status_msg_data;
-}
-std::vector<std::string> & Listener::getSysStatusTime(){
-	return this -> mavlink_sys_status_time;
-}
+std::vector<mavlink_sys_status_t> & Listener::getSysStatusMsgData(){return this -> mavlink_sys_status_msg_data;}
+std::vector<std::string> & Listener::getSysStatusTime(){return this -> mavlink_sys_status_time;}
 
+std::vector<mavlink_gps_raw_int_t> & Listener::getGPSRawIntMsgData(){return this -> mavlink_gps_raw_int_msg_data;}
+std::vector<std::string> & Listener::getGPSRawIntTime(){return this -> mavlink_gps_raw_int_time;}
+
+std::vector<mavlink_global_position_int_t> & Listener::getGlobalPositionIntMsgData(){return this -> mavlink_global_position_int_msg_data;}
+std::vector<std::string> & Listener::getGlobalPositionIntTime(){return this -> mavlink_global_position_int_time;}
+
+std::vector<mavlink_scaled_pressure_t> & Listener::getScaledPressureMsgData(){return this -> mavlink_scaled_pressure_msg_data;}
+std::vector<std::string> & Listener::getScaledPressureTime(){return this -> mavlink_scaled_pressure_time;}
 
 /*--------------------------------------------------------------------------*/
 
@@ -706,6 +644,31 @@ void MavTempWriter::writer(std::string filename, std::vector<float> data, int le
 	file << "Time" << ";" << "Temperature" << std::endl;
 	for (int i = 0; i < length; i++){
 		file << time[i] << ";" << data[i]<< std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
+/*MavGPSLocalWriter class: writes the gps local pose (x y z) data to csv file (includes a header row)*/
+
+class MavGPSLocalWriter{
+	public:
+		void writer(std::string filename, std::vector<geometry_msgs::PoseWithCovariance> pose, int length, std::vector<double> time);
+};
+
+void MavGPSLocalWriter::writer(std::string filename, std::vector<geometry_msgs::PoseWithCovariance> pose, int length, std::vector<double> time){
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "point x [m]" << ";" << "point y [m]" << ";" << "point z [m]" << ";" << "Quaternion x" << ";" << "Quaternion y" << ";" << "Quaternion z" << ";" << "Quaternion w" << ";" << "Covariance" << std::endl;
+	for (int i = 0; i < length; i++){
+		file << time[i] << ";" << pose[i].pose.position.x << ";" << pose[i].pose.position.y << ";" << pose[i].pose.position.z << ";" << pose[i].pose.orientation.x << ";" << pose[i].pose.orientation.y << ";" << pose[i].pose.orientation.z << ";" << pose[i].pose.orientation.w;
+		for (int j = 0; j < 36; j++){
+			file << ";" << pose[i].covariance[j];
+		}
+		file << std::endl;
 	}
 }
 
@@ -867,6 +830,70 @@ void MavLinkSysStatusWriter::writer(std::string filename, std::vector<mavlink_sy
 	}
 }
 
+/*-----------------------------------------------------------	std::ofstream file(filename.c_str());
+---------------*/
+
+/*MavLinkGlobalPosIntWriter class: writes the mavlink integrated global position data to csv file (includes a header row)*/
+
+class MavLinkGlobalPosIntWriter{
+	public:
+		void writer(std::string filename, std::vector<mavlink_global_position_int_t> msg_data, int length, std::vector<double> time);
+};
+
+void MavLinkGlobalPosIntWriter::writer(std::string filename, std::vector<mavlink_global_position_int_t> msg_data, int length, std::vector<double> time){
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "milliseconds since boot" << ";" << "Latitude [1E-7 deg]" << ";" << "Longitude [1E-7 deg]" << ";" << "AMSL [mm]" << ";" << "Relative altitude [mm]" << ";" << "vx (North) [cm/s]" << ";" << "vy (East) [cm/s]" << ";" << "vz (Down) [cm/s]" << ";" << "heading [centi-degrees]" << std::endl;
+	for (int i = 0; i < length; i++){
+		file << time[i] << ";" << msg_data[i].time_boot_ms << ";" << msg_data[i].lat << ";" << msg_data[i].lon << ";" << msg_data[i].alt << ";" << msg_data[i].relative_alt << ";" << msg_data[i].vx << ";" << msg_data[i].vy << ";" << msg_data[i].vz << ";" << msg_data[i].hdg << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
+/*MavLinkGPSRawIntWriter class: writes the mavlink RAW GPS data to csv file (includes a header row)*/
+
+class MavLinkGPSRawIntWriter{
+	public:
+		void writer(std::string filename, std::vector<mavlink_gps_raw_int_t> msg_data, int length, std::vector<double> time);
+};
+
+void MavLinkGPSRawIntWriter::writer(std::string filename, std::vector<mavlink_gps_raw_int_t> msg_data, int length, std::vector<double> time){
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "microseconds since boot / UNIX epoch" << ";" << "Latitude [1E-7 deg]" << ";" << "Longitude [1E-7 deg]" << ";" << "AMSL [mm]" << ";" << "GPS HDOP" << ";" << "GPS VDOP" << ";" << "Ground speed [cm/s]" << ";" << "Course over ground [centi-degrees]" << ";" << "GPS Fix type" << ";" << "Num visible Satellites" << std::endl;
+	for (int i = 0; i < length; i++){
+		file << time[i] << ";" << msg_data[i].time_usec << ";" << msg_data[i].lat << ";" << msg_data[i].lon << ";" << msg_data[i].alt << ";" << msg_data[i].eph << ";" << msg_data[i].epv << ";" << msg_data[i].vel << ";" << msg_data[i].cog << ";" << +msg_data[i].fix_type << ";" << +msg_data[i].satellites_visible << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
+/*MavLinkScaledPressureWriter class: writes the mavlink scaled pressure data to csv file (includes a header row)*/
+
+class MavLinkScaledPressureWriter{
+	public:
+		void writer(std::string filename, std::vector<mavlink_scaled_pressure_t> msg_data, int length, std::vector<double> time);
+};
+
+void MavLinkScaledPressureWriter::writer(std::string filename, std::vector<mavlink_scaled_pressure_t> msg_data, int length, std::vector<double> time){
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "milliseconds since boot" << ";" << "Absolute pressure [hPa]" << ";" << "Differential pressure [hPa]" << ";" << "Temperature [centi-degrees]" << std::endl;
+	for (int i = 0; i < length; i++){
+		file << time[i] << ";" << msg_data[i].time_boot_ms << ";" << msg_data[i].press_abs << ";" << msg_data[i].press_diff << ";" << msg_data[i].temperature << std::endl;
+	}
+}
+
 /*--------------------------------------------------------------------------*/
 
 /*BattStateWriter class: writes the battery and solar panel data to csv file (includes a header row)*/
@@ -903,7 +930,7 @@ void LaserWriter::writer(std::string filename, std::vector<float> angle_min, std
 		std::cout << "File could not be opened" << std::endl;
 		throw;
 	}
-	file << "Time" << ";" << "offset LIDAR dGPS X" << ";" << "offset LIDAR dGPS Y" << ";" << "offset LIDAR dGPS Z" << ";" << "rotation LIDAR X" << ";" << "rotation LIDAR Y" << ";" << "rotation LIDAR Z" << ";" << "rotation LIDAR W" << ";" << "rotation odom X" << ";" << "rotation odom Y" << ";" << "rotation odom Z" << ";" << "rotation odom W" << ";" << "start angle of the scan [rad]" << ";" << "end angle of the scan [rad]" << ";" << "angular distance between measurements [rad]" << ";" << "time between measurements [seconds]" << ";" << "minimum range value [m]" << ";" << "maximum range value [m]" << ";" << "range data [m]" << ";" << "intensity data [device-specific units]" << std::endl;
+	file << "Time" << ";" << "offset LIDAR dGPS X" << ";" << "offset LIDAR dGPS Y" << ";" << "offset LIDAR dGPS Z" << ";" << "rotation LIDAR X" << ";" << "rotation LIDAR Y" << ";" << "rotation LIDAR Z" << ";" << "rotation LIDAR W" << ";" << "rotation odom X" << ";" << "rotation odom Y" << ";" << "rotation odom Z" << ";" << "rotation odom W" << ";" << "start angle of the scan [rad]" << ";" << "end angle of the scan [rad]" << ";" << "angular distance between measurements [rad]" << ";" << "time between measurements [seconds]" << ";" << "Scan time" << ";" << "minimum range value [m]" << ";" << "maximum range value [m]" << ";" << "range data [m]" << ";" << "intensity data [device-specific units]" << std::endl;
 
 	for (int i = 0; i < length; i++){
 
@@ -919,7 +946,7 @@ void LaserWriter::writer(std::string filename, std::vector<float> angle_min, std
 		std::string s_intensities = ss_intensities.str();
 		s_intensities = s_intensities.substr(0, s_intensities.length()-1);
 
-		file << time[i] << ";" << offset[i].getX() << ";" << offset[i].getY() << ";" << offset[i].getZ() << ";" << rotation_lidar[i].x() << ";" << rotation_lidar[i].y() << ";" << rotation_lidar[i].z() << ";" << rotation_lidar[i].w() << ";" << rotation_odom[i].x() << ";" << rotation_odom[i].y() << ";" << rotation_odom[i].z() << ";" << rotation_odom[i].w() << ";" << angle_min[i] << ";" << angle_max[i] << ";" << angle_increment[i] << ";" << time_increment[i] << ";" << scan_time[i] << ";" << range_min[i] << ";" << range_max[i] << ";" << angle_increment[i] << ";" << s_ranges << ";" << s_intensities << std::endl;
+		file << time[i] << ";" << offset[i].getX() << ";" << offset[i].getY() << ";" << offset[i].getZ() << ";" << rotation_lidar[i].x() << ";" << rotation_lidar[i].y() << ";" << rotation_lidar[i].z() << ";" << rotation_lidar[i].w() << ";" << rotation_odom[i].x() << ";" << rotation_odom[i].y() << ";" << rotation_odom[i].z() << ";" << rotation_odom[i].w() << ";" << angle_min[i] << ";" << angle_max[i] << ";" << angle_increment[i] << ";" << time_increment[i] << ";" << scan_time[i] << ";" << range_min[i] << ";" << range_max[i] << ";" << s_ranges << ";" << s_intensities << std::endl;
 	}
 	//std::cout << "length laser data: " << length << "; length offset data: " << offset.size() << "; length rotation lidar data: " << rotation_lidar.size() << "; length rotation odom data: " << rotation_odom.size() << std::endl;
 }
@@ -1037,12 +1064,16 @@ int main(int argc, char **argv){
 	IMUWriter imuwrtr;
 	MavPressWriter mavpresswrtr;
 	MavTempWriter mavtmpwrtr;
+	MavGPSLocalWriter mavlclgpswrtr;
 	//MissionWaypointWriter mssnwptwrtr;
 	RCInWriter rcinwrtr;
 	MavStateWriter stwrtr;
 	MavLinkWriter mvlnkwrtr;
 	MavLinkBatteryStatusWriter mvlnkbttrywrtr;
 	MavLinkSysStatusWriter mvlnksyswrtr;
+	MavLinkGPSRawIntWriter mvlnkgpsrwintwrtr;
+	MavLinkGlobalPosIntWriter mvlnkglblpsintwrtr;
+	MavLinkScaledPressureWriter mvlnkscldprssrwrtr;
 	BattStateWriter bttstwrtr;
 	LaserWriter lsrwrtr;
 
@@ -1060,6 +1091,7 @@ int main(int argc, char **argv){
 	ros::Subscriber sub8 = n.subscribe("mavlink/from", 1000, &Listener::mavLinkCallback, &lstnr);
 	ros::Subscriber sub9 = n.subscribe("mavros/battery", 1000, &Listener::battStateCallback, &lstnr);
 	ros::Subscriber sub10 = n.subscribe("/scan", 1000, &Listener::laserCallback, &lstnr);
+	ros::Subscriber sub11 = n.subscribe("mavros/global_position/local", 1000, &Listener::mavrosGPSLocalCallback, &lstnr);
 
 	ros::spin();
 
@@ -1085,6 +1117,9 @@ int main(int argc, char **argv){
 	std::vector<float> mavtmp = lstnr.getMavTemperature();
 	int length_mav_temp = mavtmp.size();
 	std::vector<std::string> time_mav_temp = lstnr.getTimeMavTemp();
+	std::vector<geometry_msgs::PoseWithCovariance> pose_gps_local = lstnr.getPoseGPSLocal();
+	int length_gps_local = pose_gps_local.size();
+	std::vector<std::string> time_gps_local = lstnr.getTimeGPSLocal();
 	//std::vector<float> x_lat = lstnr.getXLat();
 	//std::vector<float> y_long = lstnr.getYLong();
 	//std::vector<float> z_alt = lstnr.getZAlt();
@@ -1121,6 +1156,18 @@ int main(int argc, char **argv){
 	std::vector<std::string> mavlink_sys_status_time = lstnr.getSysStatusTime();
 	int length_mavlink_sys_status = mavlink_sys_status_time.size();
 
+	std::vector<mavlink_gps_raw_int_t> mavlink_gps_raw_int_msg_data = lstnr.getGPSRawIntMsgData();
+	std::vector<std::string> mavlink_gps_raw_int_time = lstnr.getGPSRawIntTime();
+	int length_mavlink_gps_raw_int = mavlink_gps_raw_int_time.size();
+
+	std::vector<mavlink_global_position_int_t> mavlink_global_position_int_msg_data = lstnr.getGlobalPositionIntMsgData();
+	std::vector<std::string> mavlink_global_position_int_time = lstnr.getGlobalPositionIntTime();
+	int length_mavlink_global_position_int = mavlink_global_position_int_time.size();
+
+	std::vector<mavlink_scaled_pressure_t> mavlink_scaled_pressure_msg_data = lstnr.getScaledPressureMsgData();
+	std::vector<std::string> mavlink_scaled_pressure_time = lstnr.getScaledPressureTime();
+	int length_mavlink_scaled_pressure = mavlink_scaled_pressure_time.size();
+
 	std::vector<std::vector<float> > cell_voltage = lstnr.getCellVoltage();
 	std::vector<float> current = lstnr.getCurrent();
 	int length_battstate = current.size();
@@ -1154,6 +1201,10 @@ int main(int argc, char **argv){
 	std::string filename_mavtemp = "mavtempdata";
 	std::vector<double> time_mav_temp_double = clndata.convertTimeToDouble(time_mav_temp);
 	mavtmpwrtr.writer(filename_mavtemp, mavtmp, length_mav_temp, time_mav_temp_double);
+	std::string filename_gps_local = "gpslocaldata";
+	std::vector<double> time_gps_local_double = clndata.convertTimeToDouble(time_gps_local);
+	mavlclgpswrtr.writer(filename_gps_local, pose_gps_local, length_gps_local, time_gps_local_double);
+
 	//mssnwptwrtr.writer(x_lat, y_long, z_alt, length_mssnwpt);
 	std::string filename_rcchannels = "rcchanneldata";
 	std::vector<double> time_rc_in_double = clndata.convertTimeToDouble(time_rc_in);
@@ -1173,6 +1224,18 @@ int main(int argc, char **argv){
 	std::string filename_mavlink_sys_status = "mavlinksysstatusdata";
 	std::vector<double> time_mavlink_sys_status_double = clndata.convertTimeToDouble(mavlink_sys_status_time);
 	mvlnksyswrtr.writer(filename_mavlink_sys_status, mavlink_sys_status_msg_data, length_mavlink_sys_status, time_mavlink_sys_status_double);
+
+	std::string filename_mavlink_gps_raw_int = "mavlinkgpsrawintdata";
+	std::vector<double> time_mavlink_gps_raw_int_double = clndata.convertTimeToDouble(mavlink_gps_raw_int_time);
+	mvlnkgpsrwintwrtr.writer(filename_mavlink_gps_raw_int, mavlink_gps_raw_int_msg_data, length_mavlink_gps_raw_int, time_mavlink_gps_raw_int_double);
+
+	std::string filename_mavlink_global_position_int = "mavlinkglobalpositionintdata";
+	std::vector<double> time_mavlink_global_position_int_double = clndata.convertTimeToDouble(mavlink_global_position_int_time);
+	mvlnkglblpsintwrtr.writer(filename_mavlink_global_position_int, mavlink_global_position_int_msg_data, length_mavlink_global_position_int, time_mavlink_global_position_int_double);
+
+	std::string filename_mavlink_scaled_pressure = "mavlinkscaledpressuredata";
+	std::vector<double> time_mavlink_scaled_pressure_double = clndata.convertTimeToDouble(mavlink_scaled_pressure_time);
+	mvlnkscldprssrwrtr.writer(filename_mavlink_scaled_pressure, mavlink_scaled_pressure_msg_data, length_mavlink_scaled_pressure, time_mavlink_scaled_pressure_double);
 
 	std::string filename_batterystatus = "batterydata";
 	std::vector<double> time_battstate_double = clndata.convertTimeToDouble(time_battstate);
