@@ -35,3 +35,14 @@ Total recorded time: 7829s
 
 ## ROS troubleshooting 
   * "CMake Error at ... Could not find a package..." -> library is missing, look for it via "sudo apt-cache search ros-indigo yourMissingLibrary"
+  
+  
+## data_extraction script (listener.cpp)
+
+Writes data contained in a rosbag to CSV files for further analysis. For this, run the script while you are playing the rosbag from which you want to extract the data. If you need to write additional topics to file which are not currently covered by the script, you can add them in the script following the provided structure. 
+Read more here: https://github.com/Octanis1/data_treatment/blob/master/documentation_data_extraction-r_datatreatment.pdf
+
+## r_datatreatment script
+
+Reads the CSV files which can be generated with the data_extraction script and provides different plots (time line, box plot, QQ plot).
+Read more here: https://github.com/Octanis1/data_treatment/blob/master/documentation_data_extraction-r_datatreatment.pdf
