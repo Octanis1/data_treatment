@@ -15,6 +15,7 @@ This repository is home to a catkin workspace containing various packages used t
 Some rosbags had to be reindexed for replay. All mission rosbags were prepended a letter for quick reference, the original pseudo-date in the filename was kept. (Pseudo-date due to the linux system time not being in-sync with GPS time).
 
   * A_2016-09-19-13-24-36_0.bag / size=1.94GB,duration=1446s
+    * image extract (jpg): https://drive.google.com/drive/folders/0Bwa66ZQR4ocHd283OEk0Sm1Ya0k?usp=sharing
   * B_2016-09-19-08-28-16_0.bag / size=1.56GB,duration=1364s
   * C_2016-09-19-14-23-54_1.bag / size=854MB,duration=657s
   * D_2016-09-19-13-53-54_0.bag / size=2.53GB,duration=1794s
