@@ -716,7 +716,7 @@ void RCInWriter::writer(std::string filename, std::vector<int> rssi, std::vector
 		channel_float.push_back(static_cast< float >(channel[0]) / 100);
 		channel_float.push_back(static_cast< float >(channel[1]) / 1000);
 		channel_float.push_back(static_cast< float >(channel[2]));
-		channel_float.push_back((static_cast< float >(channel[3]) - 273.15) / 100);
+		channel_float.push_back((static_cast< float >(channel[3]) / 100) - 273.15);
 		channel_float.push_back((0.00391 * static_cast< float >(channel[4]) * static_cast< float >(channel[4]) / 2.44 + static_cast< float >(channel[4]) / 1.56) * 0.0187);
 		channel_float.push_back(static_cast< float >(channel[5]));
 		channel_float.push_back(static_cast< float >(channel[6]));
