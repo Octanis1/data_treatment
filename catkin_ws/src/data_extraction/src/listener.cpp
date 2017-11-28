@@ -125,6 +125,8 @@ class Listener{
 		std::vector<std::string> & getGlobalPositionIntTime();
 		std::vector<mavlink_scaled_pressure_t> & getScaledPressureMsgData();
 		std::vector<std::string> & getScaledPressureTime();
+		std::vector<mavlink_rc_channels_scaled_t> & getRCChannelsScaledMsgData();
+		std::vector<std::string> & getRCChannelsScaledTime();
 
 	protected:
 		tf::TransformListener tfLstnr;
@@ -200,6 +202,8 @@ class Listener{
 		std::vector<std::string> mavlink_global_position_int_time;
 		std::vector<mavlink_scaled_pressure_t> mavlink_scaled_pressure_msg_data;
 		std::vector<std::string> mavlink_scaled_pressure_time;
+		std::vector<mavlink_rc_channels_scaled_t> mavlink_rc_channels_scaled_msg_data;
+		std::vector<std::string> mavlink_rc_channels_scaled_time;
 
 };
 
@@ -385,6 +389,11 @@ void Listener::mavLinkCallback(const mavros_msgs::Mavlink::ConstPtr& mavlink_clb
 		this -> mavlink_scaled_pressure_msg_data.push_back(*(mavlink_scaled_pressure_t*)payload.data());
 		this -> mavlink_scaled_pressure_time.push_back(time);
 	}
+	else if (msgid == MAVLINK_MSG_ID_RC_CHANNELS_SCALED)
+	{
+		this -> mavlink_rc_channels_scaled_msg_data.push_back(*(mavlink_rc_channels_scaled_t*)payload.data());
+		this -> mavlink_rc_channels_scaled_time.push_back(time);
+	}
 }
 
 void Listener::battStateCallback(const sensor_msgs::BatteryState::ConstPtr& battstate_clbc){
@@ -562,6 +571,9 @@ std::vector<std::string> & Listener::getGlobalPositionIntTime(){return this -> m
 
 std::vector<mavlink_scaled_pressure_t> & Listener::getScaledPressureMsgData(){return this -> mavlink_scaled_pressure_msg_data;}
 std::vector<std::string> & Listener::getScaledPressureTime(){return this -> mavlink_scaled_pressure_time;}
+
+std::vector<mavlink_rc_channels_scaled_t> & Listener::getRCChannelsScaledMsgData(){return this -> mavlink_rc_channels_scaled_msg_data;}
+std::vector<std::string> & Listener::getRCChannelsScaledTime(){return this -> mavlink_rc_channels_scaled_time;}
 
 /*--------------------------------------------------------------------------*/
 
@@ -896,6 +908,27 @@ void MavLinkScaledPressureWriter::writer(std::string filename, std::vector<mavli
 
 /*--------------------------------------------------------------------------*/
 
+/*MavLinkRCChannelsScaledWriter class: writes the mavlink rc data (motorcurrents) to csv file (includes a header row)*/
+
+class MavLinkRCChannelsScaledWriter{
+	public:
+		void writer(std::string filename, std::vector<mavlink_rc_channels_scaled_t> msg_data, int length, std::vector<double> time);
+};
+
+void MavLinkRCChannelsScaledWriter::writer(std::string filename, std::vector<mavlink_rc_channels_scaled_t> msg_data, int length, std::vector<double> time){
+	std::ofstream file(filename.c_str());
+	if (file.is_open() == false){
+		std::cout << "File could not be opened" << std::endl;
+		throw;
+	}
+	file << "Time" << ";" << "Motor current front left [uA]" << ";" << "Motor current front right [uA]" << ";" << "Motor current back left [uA]" << ";" << "Motor current back right [uA]" << ";" << "Throttle left [0-50]" << ";" << "Throttle right [0-50]" << std::endl;
+	for (int i = 0; i < length; i++){
+	file << time[i] << ";" << msg_data[i].chan1_scaled*100 << ";" << msg_data[i].chan2_scaled*100 << ";" << msg_data[i].chan3_scaled*100 << ";" << msg_data[i].chan4_scaled*100 << ";" << msg_data[i].chan7_scaled << ";" << msg_data[i].chan8_scaled << std::endl;
+	}
+}
+
+/*--------------------------------------------------------------------------*/
+
 /*BattStateWriter class: writes the battery and solar panel data to csv file (includes a header row)*/
 
 class BattStateWriter{
@@ -1074,6 +1107,7 @@ int main(int argc, char **argv){
 	MavLinkGPSRawIntWriter mvlnkgpsrwintwrtr;
 	MavLinkGlobalPosIntWriter mvlnkglblpsintwrtr;
 	MavLinkScaledPressureWriter mvlnkscldprssrwrtr;
+	MavLinkRCChannelsScaledWriter mvlnkrcchnnlscldwrtr;
 	BattStateWriter bttstwrtr;
 	LaserWriter lsrwrtr;
 
@@ -1168,6 +1202,10 @@ int main(int argc, char **argv){
 	std::vector<std::string> mavlink_scaled_pressure_time = lstnr.getScaledPressureTime();
 	int length_mavlink_scaled_pressure = mavlink_scaled_pressure_time.size();
 
+	std::vector<mavlink_rc_channels_scaled_t> mavlink_rc_channels_scaled_msg_data = lstnr.getRCChannelsScaledMsgData();
+	std::vector<std::string> mavlink_rc_channels_scaled_time = lstnr.getRCChannelsScaledTime();
+	int length_mavlink_rc_channels_scaled = mavlink_rc_channels_scaled_time.size();
+
 	std::vector<std::vector<float> > cell_voltage = lstnr.getCellVoltage();
 	std::vector<float> current = lstnr.getCurrent();
 	int length_battstate = current.size();
@@ -1236,6 +1274,10 @@ int main(int argc, char **argv){
 	std::string filename_mavlink_scaled_pressure = "mavlinkscaledpressuredata";
 	std::vector<double> time_mavlink_scaled_pressure_double = clndata.convertTimeToDouble(mavlink_scaled_pressure_time);
 	mvlnkscldprssrwrtr.writer(filename_mavlink_scaled_pressure, mavlink_scaled_pressure_msg_data, length_mavlink_scaled_pressure, time_mavlink_scaled_pressure_double);
+
+	std::string filename_mavlink_rc_channels_scaled = "mavlinkrcchannelsscaleddata";
+	std::vector<double> time_mavlink_rc_channels_scaled_double = clndata.convertTimeToDouble(mavlink_rc_channels_scaled_time);
+	mvlnkrcchnnlscldwrtr.writer(filename_mavlink_rc_channels_scaled, mavlink_rc_channels_scaled_msg_data, length_mavlink_rc_channels_scaled, time_mavlink_rc_channels_scaled_double);
 
 	std::string filename_batterystatus = "batterydata";
 	std::vector<double> time_battstate_double = clndata.convertTimeToDouble(time_battstate);
